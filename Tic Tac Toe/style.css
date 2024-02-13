@@ -1,0 +1,119 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(
+    45deg,
+    #ff7e5f,
+    #feb47b,
+    #ffcb8c
+  ); /* Background gradient */
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+}
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  gap: 5px;
+  margin: 20px auto;
+}
+
+.cell {
+  width: 100px;
+  height: 100px;
+  background-color: #f0f0f0; /* Default cell color */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 36px;
+  cursor: pointer;
+}
+
+.cell:hover {
+  background-color: #e0e0e0; /* Cell color on hover */
+}
+
+.cell.winner {
+  background-color: #8eff9b; /* Color for winning combination */
+}
+.popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.9); /* Background color for popup */
+  border: 1px solid #ccc; /* Border for popup */
+  border-radius: 10px; /* Border radius for popup */
+  padding: 20px; /* Padding for popup */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Box shadow for popup */
+}
+
+.popup-box {
+  text-align: center;
+}
+.hidden {
+  display: none;
+}
+#new-game-btn {
+  background-color: #4caf50; /* Button background color */
+  color: #fff; /* Button text color */
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+#new-game-btn:hover {
+  background-color: #45a049; /* Button background color on hover */
+}
+
+@keyframes sparkleAnimation {
+  0%,
+  100% {
+    opacity: 0; /* Start and end with no opacity */
+  }
+  50% {
+    opacity: 1; /* Peak opacity */
+    transform: translateY(-50%); /* Move sparkle upward */
+  }
+}
+
+.celebrate {
+  position: relative; /* Required for absolute positioning of sparkles */
+}
+
+.sparkle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border-radius: 50%;
+  animation: sparkleAnimation 1s ease-in-out infinite; /* Animation properties */
+}
+
+.sparkle:nth-child(1) {
+  top: 10%;
+  left: 20%;
+}
+
+.sparkle:nth-child(2) {
+  top: 30%;
+  left: 70%;
+}
+
+.sparkle:nth-child(3) {
+  top: 50%;
+  left: 40%;
+}
+
+.sparkle:nth-child(4) {
+  top: 70%;
+  left: 80%;
+}
