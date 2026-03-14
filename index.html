@@ -1,15 +1,335 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./style.css">
-    <title>Tic Tac Toe</title>
+    <title>TheVsHub Games | Play Modular HTML Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header & Search --- */
+        header {
+            padding: 2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-container input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        /* --- Main Content & Grid --- */
+        main {
+            padding: 3rem 5%;
+            flex-grow: 1;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .games-grid {
+            display: grid;
+            /* Scalable grid: auto-fits as many cards as possible based on screen size */
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        /* --- Game Cards (Modular) --- */
+        .game-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-decoration: none;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: fadeInUp 0.6s ease backwards;
+        }
+
+        /* Staggered animation for grid items */
+        .game-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .game-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .game-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .game-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .card-icon {
+            height: 150px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4rem;
+            color: var(--accent);
+            transition: transform 0.3s ease;
+        }
+
+        .game-card:hover .card-icon {
+            transform: scale(1.1);
+        }
+
+        .card-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .card-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            transition: background 0.3s ease;
+            margin-top: auto;
+        }
+
+        .game-card:hover .play-btn {
+            background: var(--accent-hover);
+        }
+
+        /* Fallback for when no games match search */
+        .no-results {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            display: none;
+        }
+
+        /* --- Keyframe Animations --- */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Hide class used by JavaScript for search filtering */
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
+
 <body>
-    <div class="container">
-        <h1>Tic Tac Toe</h1>
-      <a href="./Tic Tac Toe/index.html">play game </a>
-      <script src="./script.js"></script>
+
+    <header>
+        <a href="#" class="logo">
+            <i class="fa-solid fa-gamepad"></i> TheVsHub <span>Games</span>
+        </a>
+
+        <div class="search-container">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search for games (e.g. Tic Tac Toe)...">
+        </div>
+    </header>
+
+    <main>
+        <h1 class="section-title">Trending Now</h1>
+
+        <div class="games-grid" id="gameGrid">
+
+            <a href="./ticTacToe.html" class="game-card" data-title="tic tac toe classic puzzle">
+                <div class="card-icon"><i class="fa-solid fa-xmarks-lines"></i></div>
+                <div class="card-info">
+                    <h3>Tic Tac Toe</h3>
+                    <p>The classic X's and O's brain teaser. Play against a friend locally.</p>
+                </div>
+                <div class="play-btn">Play Now <i class="fa-solid fa-play"></i></div>
+            </a>
+
+            <a href="./ludo.html" class="game-card" data-title="ludo duel dice board">
+                <div class="card-icon"><i class="fa-solid fa-dice"></i></div>
+                <div class="card-info">
+                    <h3>Ludo Duel</h3>
+                    <p>Roll the dice and test your luck in this fast-paced 1v1 showdown.</p>
+                </div>
+                <div class="play-btn">Play Now <i class="fa-solid fa-play"></i></div>
+            </a>
+
+            <a href="./memoryMatch.html" class="game-card" data-title="memory match cards puzzle">
+                <div class="card-icon"><i class="fa-solid fa-clone"></i></div>
+                <div class="card-info">
+                    <h3>Memory Match</h3>
+                    <p>Flip the cards and find the matching pairs before time runs out.</p>
+                </div>
+                <div class="play-btn">Play Now <i class="fa-solid fa-play"></i></div>
+            </a>
+
+            <a href="./retroSnake.html" class="game-card" data-title="retro snake arcade">
+                <div class="card-icon"><i class="fa-solid fa-worm"></i></div>
+                <div class="card-info">
+                    <h3>Retro Snake</h3>
+                    <p>Eat the apples and grow, but don't bite your own tail!</p>
+                </div>
+                <div class="play-btn">Play Now <i class="fa-solid fa-play"></i></div>
+            </a>
+
+            <div class="no-results" id="noResultsMsg">
+                <i class="fa-regular fa-face-frown" style="font-size: 3rem; margin-bottom: 1rem; display:block;"></i>
+                Oops! We couldn't find any games matching your search.
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- Modular Search Functionality ---
+        const searchInput = document.getElementById('searchInput');
+        const gameCards = document.querySelectorAll('.game-card');
+        const noResultsMsg = document.getElementById('noResultsMsg');
+
+        // Listen for user typing in the search bar
+        searchInput.addEventListener('input', function () {
+            const query = this.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            gameCards.forEach(card => {
+                // We look at the 'data-title' attribute to see if it matches the search query
+                const searchableText = card.getAttribute('data-title');
+
+                if (searchableText.includes(query)) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            // If no games are visible, show the "No Results" message
+            if (visibleCount === 0) {
+                noResultsMsg.style.display = 'block';
+            } else {
+                noResultsMsg.style.display = 'none';
+            }
+        });
+    </script>
 </body>
+
 </html>

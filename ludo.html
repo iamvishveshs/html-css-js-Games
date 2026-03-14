@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ludo Duel | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Monoton&family=Outfit:wght@300;500;700;900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --p1-color: #ff4d4d;
+            --p2-color: #2ecc71;
+            --accent: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+            color: var(--text-main);
+        }
+
+        /* --- Header & Navigation --- */
+        header {
+            width: 100%;
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        /* --- Game Container --- */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            gap: 10px;
+            padding: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-family: "Monoton", cursive;
+            font-size: clamp(2rem, 8vw, 4rem);
+            color: var(--text-main);
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            letter-spacing: 2px;
+        }
+
+        /* --- Scoreboard --- */
+        .scoreboard {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 10px;
+            background: var(--card-bg);
+            padding: 15px 30px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .score-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .score-p1 {
+            color: var(--p1-color);
+        }
+
+        .score-p2 {
+            color: var(--p2-color);
+        }
+
+        /* --- Result Banner --- */
+        .result {
+            min-height: 60px;
+            padding: 10px 30px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            border-radius: 50px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.4s ease;
+        }
+
+        .result.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .fa-trophy {
+            color: #f1c40f;
+        }
+
+        /* --- Player Cards --- */
+        .players {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .player {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 200px;
+            border: 2px solid transparent;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #player1 {
+            border-color: rgba(255, 77, 77, 0.2);
+        }
+
+        #player2 {
+            border-color: rgba(46, 204, 113, 0.2);
+        }
+
+        .player h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+
+        /* --- Animations --- */
+        .active {
+            transform: scale(1.05);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            animation: pulseGlow 1s infinite;
+        }
+
+        #player1.active {
+            border-color: var(--p1-color);
+        }
+
+        #player2.active {
+            border-color: var(--p2-color);
+        }
+
+        .shake {
+            animation: shakeDice 0.5s ease-in-out;
+        }
+
+        @keyframes shakeDice {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            25% {
+                transform: rotate(15deg) scale(1.1);
+            }
+
+            75% {
+                transform: rotate(-15deg) scale(1.1);
+            }
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        /* --- Dice --- */
+        .dice {
+            width: 90px;
+            height: 90px;
+            margin: 15px auto;
+            border-radius: 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 12px;
+            gap: 5px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .dice1 {
+            background: linear-gradient(145deg, #ff4d4d, #d43f3f);
+        }
+
+        .dice2 {
+            background: linear-gradient(145deg, #2ecc71, #27ae60);
+        }
+
+        .dice span {
+            width: 12px;
+            height: 12px;
+            background-color: white;
+            border-radius: 50%;
+            align-self: center;
+            justify-self: center;
+            opacity: 0;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4);
+            transition: opacity 0.2s ease;
+        }
+
+        /* --- Button --- */
+        button {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            background-color: var(--accent);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.6);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        button:disabled {
+            background-color: #475569;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Games</a>
+        <div class="logo">TheVsHub <span>Games</span></div>
+    </header>
+
+    <div class="container">
+        <h1>Ludo Duel</h1>
+
+        <div class="scoreboard">
+            <div class="score-item">
+                <span class="score-label">Player 1</span>
+                <span class="score-val score-p1" id="scoreP1">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Draws</span>
+                <span class="score-val" id="scoreDraws">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Player 2</span>
+                <span class="score-val score-p2" id="scoreP2">0</span>
+            </div>
+        </div>
+
+        <div class="result" id="resultDisplay"></div>
+
+        <div class="players">
+            <div class="player" id="player1">
+                <h2>Player 1</h2>
+                <div class="dice dice1" id="d1"></div>
+            </div>
+            <div class="player" id="player2">
+                <h2>Player 2</h2>
+                <div class="dice dice2" id="d2"></div>
+            </div>
+        </div>
+
+        <button id="rollDice">Roll Dice <i class="fa-solid fa-dice"></i></button>
+    </div>
+
+    <script>
+        const btn = document.getElementById('rollDice');
+        const d1Container = document.getElementById('d1');
+        const d2Container = document.getElementById('d2');
+        const resBox = document.getElementById('resultDisplay');
+        const audio = new Audio("https://cdn.pixabay.com/audio/2023/03/14/audio_7763cd5c8a.mp3");
+
+        // Score state variables
+        let scores = { p1: 0, p2: 0, draws: 0 };
+        const scoreP1Display = document.getElementById('scoreP1');
+        const scoreP2Display = document.getElementById('scoreP2');
+        const scoreDrawsDisplay = document.getElementById('scoreDraws');
+
+        // Simple mapping for dice dot positions (out of 9 grid cells)
+        const diceLayouts = {
+            1: [4],
+            2: [0, 8],
+            3: [0, 4, 8],
+            4: [0, 2, 6, 8],
+            5: [0, 2, 4, 6, 8],
+            6: [0, 2, 3, 5, 6, 8]
+        };
+
+        function createDice(container, value) {
+            container.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const dot = document.createElement('span');
+                if (diceLayouts[value].includes(i)) {
+                    // Small delay makes the dots "pop" in nicely
+                    setTimeout(() => { dot.style.opacity = '1'; }, 50);
+                }
+                container.appendChild(dot);
+            }
+        }
+
+        function updateScoreboard() {
+            scoreP1Display.textContent = scores.p1;
+            scoreP2Display.textContent = scores.p2;
+            scoreDrawsDisplay.textContent = scores.draws;
+        }
+
+        btn.addEventListener('click', () => {
+            // UI Reset
+            btn.disabled = true;
+            resBox.classList.remove('show');
+            document.querySelectorAll('.player').forEach(p => p.classList.remove('active'));
+
+            // Add shake animation
+            d1Container.classList.add('shake');
+            d2Container.classList.add('shake');
+
+            // Reset dice to blank during shake
+            d1Container.innerHTML = '';
+            d2Container.innerHTML = '';
+
+            audio.play();
+
+            setTimeout(() => {
+                d1Container.classList.remove('shake');
+                d2Container.classList.remove('shake');
+
+                const r1 = Math.floor(Math.random() * 6) + 1;
+                const r2 = Math.floor(Math.random() * 6) + 1;
+
+                createDice(d1Container, r1);
+                createDice(d2Container, r2);
+
+                if (r1 > r2) {
+                    resBox.innerHTML = `Player 1 Wins! <i class="fa-solid fa-trophy"></i>`;
+                    document.getElementById('player1').classList.add('active');
+                    scores.p1++;
+                } else if (r2 > r1) {
+                    resBox.innerHTML = `Player 2 Wins! <i class="fa-solid fa-trophy"></i>`;
+                    document.getElementById('player2').classList.add('active');
+                    scores.p2++;
+                } else {
+                    resBox.innerHTML = `It's a Draw! <i class="fa-solid fa-handshake"></i>`;
+                    scores.draws++;
+                }
+
+                updateScoreboard();
+                resBox.classList.add('show');
+
+                setTimeout(() => {
+                    btn.disabled = false;
+                }, 800);
+
+            }, 600); // 600ms matches the shake animation duration
+        });
+
+        // Initialize empty dice
+        createDice(d1Container, 1);
+        createDice(d2Container, 1);
+    </script>
+</body>
+
+</html>

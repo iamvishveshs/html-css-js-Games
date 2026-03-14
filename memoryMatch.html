@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Match | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-front: #1e293b;
+            --card-back: #3b82f6;
+            /* Accent color when flipped */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --success: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+            color: var(--text-main);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--accent);
+        }
+
+        /* --- Main Container --- */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            letter-spacing: 1px;
+        }
+
+        /* --- Scoreboard --- */
+        .scoreboard {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 30px;
+            background: var(--card-bg);
+            padding: 15px 40px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .score-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .score-success {
+            color: var(--success);
+        }
+
+        /* --- Game Board --- */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            width: 100%;
+            perspective: 1000px;
+            /* Essential for 3D flip effect */
+        }
+
+        /* --- Card Styles (3D Flip Mechanics) --- */
+        .card {
+            aspect-ratio: 1 / 1;
+            /* Keeps cards perfectly square */
+            background-color: transparent;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* When 'flipped' class is added, rotate the card 180 degrees */
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* When 'matched' class is added, pulse and stay flipped */
+        .card.matched {
+            transform: rotateY(180deg) scale(0.95);
+            animation: pulseMatch 1.5s infinite;
+            cursor: default;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* The Front of the Card (Hidden state) */
+        .card-front {
+            background: var(--card-front);
+            background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.03) 0px, rgba(255, 255, 255, 0.03) 10px, transparent 10px, transparent 20px);
+            color: var(--text-muted);
+        }
+
+        /* The Back of the Card (Revealed state) */
+        .card-back {
+            background: var(--card-back);
+            color: white;
+            transform: rotateY(180deg);
+            /* This face starts rotated away */
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Overrides for matched cards */
+        .card.matched .card-back {
+            background: var(--success);
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.4);
+        }
+
+        @keyframes pulseMatch {
+
+            0%,
+            100% {
+                box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(46, 204, 113, 0.8);
+            }
+        }
+
+        /* --- Popup Modal --- */
+        .popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        .popup.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .popup-box {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transform: scale(1);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .popup.hidden .popup-box {
+            transform: scale(0.8);
+        }
+
+        .popup-box h2 {
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px var(--success);
+        }
+
+        .popup-box p {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-size: 1.2rem;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            font-size: 1.2rem;
+            font-weight: 900;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.6);
+        }
+
+        @media (max-width: 500px) {
+            .game-board {
+                gap: 10px;
+            }
+
+            .card-face {
+                font-size: 2rem;
+                border-radius: 12px;
+            }
+
+            .scoreboard {
+                padding: 10px 20px;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Games</a>
+        <div class="logo">TheVsHub <span>Games</span></div>
+    </header>
+
+    <div class="container">
+        <h1>Memory Match</h1>
+
+        <div class="scoreboard">
+            <div class="score-item">
+                <span class="score-label">Moves</span>
+                <span class="score-val" id="moveCounter">0</span>
+            </div>
+            <div class="score-item">
+                <span class="score-label">Matches</span>
+                <span class="score-val score-success" id="matchCounter">0/8</span>
+            </div>
+        </div>
+
+        <div class="game-board" id="gameBoard">
+        </div>
+
+        <div id="victoryPopup" class="popup hidden">
+            <div class="popup-box">
+                <h2>You Won! 🎉</h2>
+                <p>Completed in <span id="finalMoves">0</span> moves.</p>
+                <button class="play-btn" id="restartBtn">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gameBoard = document.getElementById('gameBoard');
+        const moveCounterDisplay = document.getElementById('moveCounter');
+        const matchCounterDisplay = document.getElementById('matchCounter');
+        const victoryPopup = document.getElementById('victoryPopup');
+        const finalMovesDisplay = document.getElementById('finalMoves');
+        const restartBtn = document.getElementById('restartBtn');
+
+        // Font Awesome Icons to be matched
+        const icons = [
+            'fa-ghost', 'fa-robot', 'fa-rocket', 'fa-dragon',
+            'fa-spider', 'fa-poop', 'fa-cat', 'fa-dog'
+        ];
+
+        let cardsArray = [];
+        let firstCard = null;
+        let secondCard = null;
+        let moves = 0;
+        let matches = 0;
+        let lockBoard = false; // Prevents clicking during animation
+
+        // 1. Initialize Game
+        function initGame() {
+            // Reset state
+            moves = 0;
+            matches = 0;
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+            updateScoreboard();
+            victoryPopup.classList.add('hidden');
+            gameBoard.innerHTML = '';
+
+            // Duplicate icons to create pairs and shuffle them
+            cardsArray = [...icons, ...icons];
+            shuffleArray(cardsArray);
+
+            // Generate HTML for each card
+            cardsArray.forEach(icon => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.icon = icon; // Store the icon name in the element
+
+                // Create the Front and Back faces
+                card.innerHTML = `
+                    <div class="card-face card-front">
+                        <i class="fa-solid fa-question"></i>
+                    </div>
+                    <div class="card-face card-back">
+                        <i class="fa-solid ${icon}"></i>
+                    </div>
+                `;
+
+                card.addEventListener('click', flipCard);
+                gameBoard.appendChild(card);
+            });
+        }
+
+        // 2. Shuffle Function (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // 3. Flip Logic
+        function flipCard() {
+            if (lockBoard) return; // Prevent clicking while evaluating a match
+            if (this === firstCard) return; // Prevent double-clicking the same card
+
+            this.classList.add('flipped');
+
+            if (!firstCard) {
+                // This is the first card clicked
+                firstCard = this;
+                return;
+            }
+
+            // This is the second card clicked
+            secondCard = this;
+            moves++;
+            updateScoreboard();
+            checkForMatch();
+        }
+
+        // 4. Match Logic
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.icon === secondCard.dataset.icon;
+
+            if (isMatch) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        function disableCards() {
+            // Add 'matched' class for glowing animation
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+
+            // Remove click listeners so they can't be interacted with anymore
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+
+            matches++;
+            updateScoreboard();
+            resetBoard();
+
+            // Check for Win condition
+            if (matches === icons.length) {
+                setTimeout(() => {
+                    finalMovesDisplay.textContent = moves;
+                    victoryPopup.classList.remove('hidden');
+                }, 800);
+            }
+        }
+
+        function unflipCards() {
+            lockBoard = true; // Lock board so user can't click a 3rd card
+
+            // Wait 1 second so the user can see the cards, then flip them back
+            setTimeout(() => {
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+        }
+
+        // 5. Update UI
+        function updateScoreboard() {
+            moveCounterDisplay.textContent = moves;
+            matchCounterDisplay.textContent = `${matches}/${icons.length}`;
+        }
+
+        // Event Listeners
+        restartBtn.addEventListener('click', initGame);
+
+        // Boot up the game on page load
+        initGame();
+    </script>
+</body>
+
+</html>
