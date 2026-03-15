@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Darts | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --wheel-color: #06b6d4;
+            --dart-color: #f43f5e;
+            --safe-color: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0a0f1a 80%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+            position: relative;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 10px;
+            gap: 15px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .score-level {
+            color: var(--wheel-color);
+        }
+
+        /* --- Canvas --- */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 3 / 4;
+            background: #000;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            touch-action: manipulation;
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            /* Keep touch action on canvas directly */
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--dart-color);
+            text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .tap-anim {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tap-anim i.fa-hand-pointer {
+            color: var(--dart-color);
+            animation: fastTap 1s infinite alternate;
+        }
+
+        @keyframes fastTap {
+            0% {
+                transform: scale(1) translateY(0);
+            }
+
+            100% {
+                transform: scale(0.8) translateY(-10px);
+                color: white;
+            }
+        }
+
+        .dart-icons {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            pointer-events: none;
+        }
+
+        .dart-icon {
+            width: 15px;
+            height: 15px;
+            background: var(--dart-color);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--dart-color);
+            transition: all 0.2s;
+        }
+
+        .dart-icon.used {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i
+                    class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Level</div>
+                <div class="score-val score-level" id="levelDisplay">1</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Score</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="gameCanvas" width="450" height="600"></canvas>
+
+            <div class="dart-icons" id="dartIconsContainer">
+            </div>
+
+            <div class="modal-overlay" id="guideModal">
+                <div class="modal-box">
+                    <h2>Neon Darts</h2>
+                    <div class="tap-anim">
+                        <i class="fa-solid fa-hand-pointer"></i>
+                        <i class="fa-solid fa-arrow-up" style="color: #475569;"></i>
+                    </div>
+                    <p><strong>Tap anywhere</strong> to fire a neon dart.</p>
+                    <p>Pin all your darts into the glowing wheel. <br><strong style="color: #f43f5e;">Do NOT hit another
+                            dart!</strong></p>
+                    <button class="play-btn" id="startGameBtn">Start Playing</button>
+                </div>
+            </div>
+
+            <div class="modal-overlay hidden" id="gameOverModal">
+                <div class="modal-box">
+                    <h2 style="color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);">Target Failed!</h2>
+                    <p style="font-size: 1.5rem; color: white;">Final Score: <span id="finalScoreDisplay">0</span></p>
+                    <button class="play-btn" id="tryAgainBtn" style="background: #f43f5e;">Try Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const canvasWrapper = document.getElementById("canvasWrapper");
+
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const levelDisplay = document.getElementById("levelDisplay");
+        const dartIconsContainer = document.getElementById("dartIconsContainer");
+        const guideModal = document.getElementById("guideModal");
+        const gameOverModal = document.getElementById("gameOverModal");
+
+        // --- Game State ---
+        let gameActive = false;
+        let animationId;
+        let score = 0;
+        let level = 1;
+
+        let wheelAngle = 0;
+        let wheelSpeed = 0.03;
+        let targetSpeed = 0.03;
+
+        let totalDarts = 0;
+        let dartsLeft = 0;
+
+        let stuckDarts = [];
+        let activeDart = null;
+        let particles = [];
+        let screenShake = 0;
+        let lastShootTime = 0; // FIX: To prevent multi-finger double-tap glitches
+
+        // Constants
+        const WHEEL_X = canvas.width / 2;
+        const WHEEL_Y = canvas.height * 0.35;
+        const WHEEL_RADIUS = 75;
+        const DART_LENGTH = 45;
+        const DART_WIDTH = 6;
+        const HIT_THRESHOLD = 0.18;
+
+        // --- Mechanics & Logic ---
+        function startLevel() {
+            totalDarts = 4 + Math.floor(level * 1.2);
+            dartsLeft = totalDarts;
+
+            stuckDarts = [];
+            activeDart = null;
+            wheelAngle = 0;
+            wheelSpeed = 0.02 + (level * 0.005);
+            targetSpeed = wheelSpeed;
+
+            if (level > 2) {
+                let preStuck = Math.floor(level / 3);
+                for (let i = 0; i < preStuck; i++) {
+                    stuckDarts.push(Math.random() * Math.PI * 2);
+                }
+            }
+
+            levelDisplay.textContent = level;
+            updateDartUI();
+
+            gameActive = true;
+            guideModal.classList.add("hidden");
+            gameOverModal.classList.add("hidden");
+        }
+
+        function updateDartUI() {
+            dartIconsContainer.innerHTML = '';
+            for (let i = 0; i < totalDarts; i++) {
+                let icon = document.createElement('div');
+                icon.classList.add('dart-icon');
+                if (i >= dartsLeft) icon.classList.add('used');
+                dartIconsContainer.appendChild(icon);
+            }
+        }
+
+        function shootDart() {
+            let now = Date.now();
+            // FIX: Ensure game is active, no dart is flying, and enforce a 50ms cooldown
+            if (!gameActive || activeDart !== null || dartsLeft <= 0 || now - lastShootTime < 50) return;
+
+            lastShootTime = now;
+
+            activeDart = {
+                x: canvas.width / 2,
+                y: canvas.height - 50,
+                vy: -25
+            };
+
+            dartsLeft--;
+            updateDartUI();
+        }
+
+        function checkCollision() {
+            if (!activeDart) return;
+
+            if (activeDart.y <= WHEEL_Y + WHEEL_RADIUS) {
+                let hitAngle = (Math.PI / 2 - wheelAngle) % (Math.PI * 2);
+                if (hitAngle < 0) hitAngle += Math.PI * 2;
+
+                let hitFailed = false;
+                for (let angle of stuckDarts) {
+                    let diff = Math.abs(hitAngle - angle);
+                    diff = Math.min(diff, Math.PI * 2 - diff);
+
+                    if (diff < HIT_THRESHOLD) {
+                        hitFailed = true;
+                        break;
+                    }
+                }
+
+                if (hitFailed) {
+                    createHitSpark(activeDart.x, activeDart.y, '#f43f5e');
+                    screenShake = 15;
+                    gameActive = false;
+                    setTimeout(endGame, 1000);
+
+                    activeDart.vy = 10;
+                    activeDart.vx = (Math.random() - 0.5) * 10;
+                } else {
+                    stuckDarts.push(hitAngle);
+                    createHitSpark(activeDart.x, activeDart.y, '#f8fafc');
+                    score += 10;
+                    scoreDisplay.textContent = score;
+                    screenShake = 5;
+                    activeDart = null;
+
+                    if (dartsLeft === 0) {
+                        score += 50 * level;
+                        scoreDisplay.textContent = score;
+                        gameActive = false;
+                        explodeWheel();
+                        setTimeout(() => {
+                            level++;
+                            startLevel();
+                        }, 1500);
+                    } else {
+                        if (Math.random() < 0.4) {
+                            targetSpeed = (Math.random() > 0.5 ? 1 : -1) * (0.02 + Math.random() * 0.05);
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Visuals ---
+        function drawDart(x, y, angle = Math.PI / 2) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle - Math.PI / 2);
+
+            ctx.fillStyle = '#f43f5e';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#f43f5e';
+
+            ctx.beginPath();
+            ctx.moveTo(0, -DART_LENGTH);
+            ctx.lineTo(DART_WIDTH / 2, 0);
+            ctx.lineTo(-DART_WIDTH / 2, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(-DART_WIDTH / 2, 0, DART_WIDTH, 4);
+
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        function createHitSpark(x, y, color) {
+            for (let i = 0; i < 10; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+
+        function explodeWheel() {
+            for (let i = 0; i < 30; i++) {
+                particles.push({
+                    x: WHEEL_X + (Math.random() - 0.5) * WHEEL_RADIUS,
+                    y: WHEEL_Y + (Math.random() - 0.5) * WHEEL_RADIUS,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    life: 1.5,
+                    color: '#06b6d4',
+                    isFragment: true
+                });
+            }
+
+            for (let angle of stuckDarts) {
+                let dartX = WHEEL_X + Math.cos(wheelAngle + angle) * WHEEL_RADIUS;
+                let dartY = WHEEL_Y + Math.sin(wheelAngle + angle) * WHEEL_RADIUS;
+                createHitSpark(dartX, dartY, '#f43f5e');
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.03;
+
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+
+                if (p.isFragment) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = p.color;
+                    ctx.fillRect(p.x, p.y, 8, 8);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.globalAlpha = 1.0;
+                ctx.shadowBlur = 0;
+
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        // --- Game Loop ---
+        function loop() {
+            ctx.fillStyle = "#0a0f1a";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            if (screenShake > 0) {
+                let sx = (Math.random() - 0.5) * screenShake;
+                let sy = (Math.random() - 0.5) * screenShake;
+                ctx.translate(sx, sy);
+                screenShake -= 1;
+            }
+
+            wheelSpeed += (targetSpeed - wheelSpeed) * 0.05;
+            if (gameActive || activeDart) {
+                wheelAngle += wheelSpeed;
+            }
+
+            if (gameActive || activeDart) {
+                ctx.beginPath();
+                ctx.arc(WHEEL_X, WHEEL_Y, WHEEL_RADIUS, 0, Math.PI * 2);
+                ctx.fillStyle = '#1e293b';
+                ctx.fill();
+
+                ctx.strokeStyle = '#06b6d4';
+                ctx.lineWidth = 4;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#06b6d4';
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                ctx.beginPath();
+                ctx.arc(WHEEL_X, WHEEL_Y, 15, 0, Math.PI * 2);
+                ctx.fillStyle = '#06b6d4';
+                ctx.fill();
+
+                for (let angle of stuckDarts) {
+                    let absAngle = wheelAngle + angle;
+                    let dartX = WHEEL_X + Math.cos(absAngle) * WHEEL_RADIUS;
+                    let dartY = WHEEL_Y + Math.sin(absAngle) * WHEEL_RADIUS;
+                    drawDart(dartX, dartY, absAngle + Math.PI);
+                }
+            }
+
+            if (activeDart) {
+                activeDart.y += activeDart.vy;
+                if (activeDart.vx) activeDart.x += activeDart.vx;
+
+                drawDart(activeDart.x, activeDart.y);
+                checkCollision();
+
+                if (activeDart && activeDart.y > canvas.height + 50) {
+                    activeDart = null;
+                }
+            }
+
+            if (gameActive && !activeDart && dartsLeft > 0) {
+                drawDart(canvas.width / 2, canvas.height - 50);
+            }
+
+            updateParticles();
+            ctx.restore();
+
+            animationId = requestAnimationFrame(loop);
+        }
+
+        // --- State Management ---
+        function startGame() {
+            if (gameActive) return;
+            cancelAnimationFrame(animationId);
+
+            score = 0;
+            level = 1;
+            particles = [];
+            scoreDisplay.textContent = score;
+            startLevel();
+            loop();
+        }
+
+        function endGame() {
+            gameActive = false;
+            document.getElementById("finalScoreDisplay").textContent = score;
+            gameOverModal.classList.remove("hidden");
+        }
+
+        // --- Controls (Touch & Keyboard) ---
+
+        // FIX: Replaced split touch/mouse listeners with a unified pointerdown to completely eliminate ghost clicks
+        canvas.addEventListener('pointerdown', (e) => {
+            if (!gameActive) return;
+            e.preventDefault();
+            shootDart();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                shootDart();
+            }
+        });
+
+        // --- UI Buttons ---
+        function handleBtnClick(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (gameActive) return;
+            startGame();
+        }
+
+        document.getElementById("startGameBtn").addEventListener("click", handleBtnClick);
+        document.getElementById("startGameBtn").addEventListener("touchstart", handleBtnClick, { passive: false });
+
+        document.getElementById("tryAgainBtn").addEventListener("click", handleBtnClick);
+        document.getElementById("tryAgainBtn").addEventListener("touchstart", handleBtnClick, { passive: false });
+
+        document.getElementById("helpBtn").addEventListener("click", () => {
+            gameActive = false;
+            guideModal.classList.remove("hidden");
+        });
+
+        // --- Fullscreen API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Initial Render
+        ctx.fillStyle = "#0a0f1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Smash | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --good-color: #2ecc71;
+            /* Green targets */
+            --bad-color: #f43f5e;
+            /* Red bombs */
+            --hole-color: #000000;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* overflow: hidden; */
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0a0f1a 80%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+            padding: 10px;
+            position: relative;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .time-val {
+            color: #eab308;
+        }
+
+        /* --- The Grid --- */
+        .board-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hole-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            overflow: hidden;
+            border-radius: 12px;
+            touch-action: manipulation;
+        }
+
+        /* The dark hole */
+        .hole {
+            position: absolute;
+            bottom: 10%;
+            width: 80%;
+            height: 40%;
+            background: var(--hole-color);
+            border-radius: 50%;
+            box-shadow: inset 0 10px 15px rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+
+        /* The popping target */
+        .target {
+            position: absolute;
+            bottom: 20%;
+            width: 60%;
+            height: 70%;
+            border-radius: 50px 50px 20px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            color: white;
+            z-index: 2;
+            transform: translateY(150%);
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: crosshair;
+        }
+
+        .target.up {
+            transform: translateY(0);
+        }
+
+        .target.good {
+            background: var(--good-color);
+            box-shadow: 0 0 20px var(--good-color), inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .target.bad {
+            background: var(--bad-color);
+            box-shadow: 0 0 20px var(--bad-color), inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Overlay Canvas for Particles */
+        #particleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* Lets clicks pass through to the CSS grid */
+            z-index: 10;
+            border-radius: 20px;
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--good-color);
+            text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .guide-grid {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+        }
+
+        .guide-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: #cbd5e1;
+        }
+
+        .guide-item i {
+            font-size: 2.5rem;
+        }
+
+        @keyframes popAnim {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .anim-pop {
+            animation: popAnim 0.5s infinite;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i
+                    class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Score</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Time</div>
+                <div class="score-val time-val" id="timeDisplay">30s</div>
+            </div>
+        </div>
+
+        <div class="board-wrapper" id="boardWrapper">
+            <canvas id="particleCanvas"></canvas>
+
+            <div class="grid" id="grid">
+            </div>
+
+            <div class="modal-overlay" id="guideModal">
+                <div class="modal-box">
+                    <h2>Neon Smash</h2>
+                    <div class="guide-grid">
+                        <div class="guide-item">
+                            <i class="fa-brands fa-space-awesome anim-pop"
+                                style="color: var(--good-color); text-shadow: 0 0 10px var(--good-color);"></i>
+                            <span>Smash (+10)</span>
+                        </div>
+                        <div class="guide-item">
+                            <i class="fa-solid fa-bomb anim-pop"
+                                style="color: var(--bad-color); text-shadow: 0 0 10px var(--bad-color);"></i>
+                            <span>Avoid (-20)</span>
+                        </div>
+                    </div>
+                    <p>Tap the glowing aliens as fast as you can. Do <strong>not</strong> tap the red bombs!</p>
+                    <button class="play-btn" id="startGameBtn">Start Timer</button>
+                </div>
+            </div>
+
+            <div class="modal-overlay hidden" id="gameOverModal">
+                <div class="modal-box">
+                    <h2 style="color: #eab308; text-shadow: 0 0 10px rgba(234, 179, 8, 0.5);">Time's Up!</h2>
+                    <p style="font-size: 1.5rem; color: white;">Final Score: <span id="finalScoreDisplay">0</span></p>
+                    <button class="play-btn" id="tryAgainBtn" style="background: #eab308;">Play Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gridEl = document.getElementById('grid');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const guideModal = document.getElementById('guideModal');
+        const gameOverModal = document.getElementById('gameOverModal');
+
+        // Canvas setup for particles
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        // Game State
+        let gameActive = false;
+        let score = 0;
+        let timeLeft = 30;
+        let timerInterval;
+        let spawnInterval;
+
+        let holes = []; // Array to store hole DOM elements and state
+
+        // --- Initialization ---
+        function initGrid() {
+            gridEl.innerHTML = '';
+            holes = [];
+
+            for (let i = 0; i < 9; i++) {
+                const container = document.createElement('div');
+                container.classList.add('hole-container');
+
+                const hole = document.createElement('div');
+                hole.classList.add('hole');
+
+                const target = document.createElement('div');
+                target.classList.add('target');
+                target.dataset.index = i;
+
+                // Attach both touch and mouse events for instant response
+                target.addEventListener('touchstart', handleSmash, { passive: false });
+                target.addEventListener('mousedown', handleSmash);
+
+                container.appendChild(hole);
+                container.appendChild(target);
+                gridEl.appendChild(container);
+
+                holes.push({
+                    element: target,
+                    up: false,
+                    timeout: null,
+                    type: 'good'
+                });
+            }
+        }
+
+        function resizeCanvas() {
+            const wrapper = document.getElementById('boardWrapper');
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- Game Mechanics ---
+        function spawnTarget() {
+            if (!gameActive) return;
+
+            // Find an empty hole
+            let availableHoles = holes.filter(h => !h.up);
+            if (availableHoles.length === 0) return;
+
+            let randomHole = availableHoles[Math.floor(Math.random() * availableHoles.length)];
+            let isBomb = Math.random() > 0.8; // 20% chance for a bomb
+
+            randomHole.up = true;
+            randomHole.type = isBomb ? 'bad' : 'good';
+
+            // Setup DOM
+            randomHole.element.classList.remove('good', 'bad');
+            randomHole.element.classList.add(isBomb ? 'bad' : 'good');
+            randomHole.element.innerHTML = isBomb ? '<i class="fa-solid fa-bomb"></i>' : '<i class="fa-brands fa-space-awesome"></i>';
+            randomHole.element.classList.add('up');
+
+            // Hide after random duration (faster as time goes down)
+            let duration = Math.random() * 900 + 400;
+            if (timeLeft < 15) duration *= 1; // Speed up in second half
+
+            randomHole.timeout = setTimeout(() => {
+                hideTarget(randomHole);
+            }, duration);
+        }
+
+        function hideTarget(holeObj) {
+            holeObj.up = false;
+            holeObj.element.classList.remove('up');
+            if (holeObj.timeout) clearTimeout(holeObj.timeout);
+        }
+
+        function handleSmash(e) {
+            if (!gameActive) return;
+            e.preventDefault(); // Stop mobile scrolling/zooming
+
+            const targetEl = e.currentTarget;
+            const index = targetEl.dataset.index;
+            const holeObj = holes[index];
+
+            if (!holeObj.up) return; // Already smashed or hiding
+
+            // Get coordinates for particles relative to the canvas
+            const rect = targetEl.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            const x = rect.left - canvasRect.left + rect.width / 2;
+            const y = rect.top - canvasRect.top + rect.height / 2;
+
+            if (holeObj.type === 'good') {
+                score += 10;
+                createExplosion(x, y, '#2ecc71');
+            } else {
+                score -= 20;
+                createExplosion(x, y, '#f43f5e');
+                // Screen shake effect on the whole wrapper
+                document.getElementById('boardWrapper').style.transform = "translate(5px, 5px)";
+                setTimeout(() => document.getElementById('boardWrapper').style.transform = "none", 50);
+            }
+
+            scoreDisplay.textContent = score;
+            hideTarget(holeObj);
+        }
+
+        // --- Particle Engine ---
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 15; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.05;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1.0;
+            ctx.shadowBlur = 0;
+
+            if (gameActive || particles.length > 0) {
+                requestAnimationFrame(drawParticles);
+            }
+        }
+
+        // --- Core Loops ---
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            particles = [];
+            scoreDisplay.textContent = score;
+            timeDisplay.textContent = `${timeLeft}s`;
+
+            // Reset all holes
+            holes.forEach(h => hideTarget(h));
+
+            gameActive = true;
+            guideModal.classList.add("hidden");
+            gameOverModal.classList.add("hidden");
+
+            resizeCanvas();
+            drawParticles(); // Kick off particle loop
+
+            // Spawn Engine
+            spawnInterval = setInterval(() => {
+                if (gameActive) spawnTarget();
+            }, 500);
+
+            // Timer
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timeDisplay.textContent = `${timeLeft}s`;
+
+                if (timeLeft <= 10) {
+                    timeDisplay.style.color = "#f43f5e"; // Turn red
+                } else {
+                    timeDisplay.style.color = "#eab308";
+                }
+
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerInterval);
+            clearInterval(spawnInterval);
+
+            // Retract all moles
+            holes.forEach(h => hideTarget(h));
+
+            document.getElementById("finalScoreDisplay").textContent = score;
+            setTimeout(() => gameOverModal.classList.remove("hidden"), 500);
+        }
+
+        // --- Buttons ---
+        document.getElementById("startGameBtn").addEventListener("click", startGame);
+        document.getElementById("tryAgainBtn").addEventListener("click", startGame);
+        document.getElementById("helpBtn").addEventListener("click", () => {
+            if (gameActive) {
+                // Pause effectively (in a full game we'd pause intervals, here we just end it for simplicity or let it run)
+                // For this arcade version, just show rules.
+                guideModal.classList.remove("hidden");
+            }
+        });
+
+        // --- Fullscreen API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Setup DOM on load
+        initGrid();
+
+        // Wait for fonts/layout to settle before sizing canvas
+        setTimeout(resizeCanvas, 100);
+
+    </script>
+</body>
+
+</html>

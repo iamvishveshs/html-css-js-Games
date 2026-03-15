@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Plinko | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --ball-color: #facc15;
+            --peg-color: #06b6d4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0a0f1a 80%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+            position: relative;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 10px;
+            gap: 15px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .score-balls {
+            color: var(--ball-color);
+        }
+
+        /* --- Canvas --- */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 3 / 4;
+            background: #000;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            touch-action: none;
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--peg-color);
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .drop-anim {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .drop-anim i.fa-hand-pointer {
+            color: var(--ball-color);
+            animation: tapDrop 1s infinite alternate;
+        }
+
+        @keyframes tapDrop {
+            0% { transform: scale(1); }
+            100% { transform: scale(0.8); color: white; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Score</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Balls Left</div>
+                <div class="score-val score-balls" id="ballsDisplay">20</div>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="gameCanvas" width="600" height="800"></canvas>
+
+            <div class="modal-overlay" id="guideModal">
+                <div class="modal-box">
+                    <h2>Neon Plinko</h2>
+                    <div class="drop-anim">
+                        <i class="fa-solid fa-hand-pointer"></i>
+                        <i class="fa-solid fa-angles-down" style="font-size: 1.5rem; color: #475569;"></i>
+                    </div>
+                    <p><strong>Tap anywhere</strong> near the top to drop a glowing ball.</p>
+                    <p>Watch it bounce through the pegs and aim for the highest multipliers at the bottom!</p>
+                    <button class="play-btn" id="startGameBtn">Start Dropping</button>
+                </div>
+            </div>
+
+            <div class="modal-overlay hidden" id="gameOverModal">
+                <div class="modal-box">
+                    <h2 style="color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);">Out of Balls!</h2>
+                    <p style="font-size: 1.5rem; color: white;">Final Score: <span id="finalScoreDisplay">0</span></p>
+                    <button class="play-btn" id="tryAgainBtn" style="background: #2ecc71;">Play Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const canvasWrapper = document.getElementById("canvasWrapper");
+
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const ballsDisplay = document.getElementById("ballsDisplay");
+        const guideModal = document.getElementById("guideModal");
+        const gameOverModal = document.getElementById("gameOverModal");
+
+        // --- Physics Constants ---
+        const GRAVITY = 0.3;
+        const BOUNCE = 0.6;   // Restitution
+        const FRICTION = 0.99;
+        const BALL_RADIUS = 10;
+        const PEG_RADIUS = 8;
+
+        // --- Game State ---
+        let gameActive = false;
+        let animationId; // Used to prevent double speed bug
+        let score = 0;
+        let ballsLeft = 20;
+        let balls = [];
+        let pegs = [];
+        let buckets = [];
+        let particles = [];
+
+        // Bucket Multipliers (Symmetrical)
+        const MULTIPLIERS = [0.5, 1, 2, 5, 2, 1, 0.5];
+        const BUCKET_COLORS = ['#f43f5e', '#f97316', '#eab308', '#2ecc71', '#eab308', '#f97316', '#f43f5e'];
+
+        // --- Setup Environment ---
+        function buildBoard() {
+            pegs = [];
+            buckets = [];
+
+            // Generate Staggered Pegs
+            const rows = 11;
+            const startY = 150;
+            const spacingY = 50;
+            const spacingX = 60;
+
+            for (let r = 0; r < rows; r++) {
+                let cols = (r % 2 === 0) ? 9 : 8;
+                let offsetX = (canvas.width - (cols - 1) * spacingX) / 2;
+
+                for (let c = 0; c < cols; c++) {
+                    pegs.push({
+                        x: offsetX + c * spacingX,
+                        y: startY + r * spacingY,
+                        r: PEG_RADIUS,
+                        lit: 0 
+                    });
+                }
+            }
+
+            // Generate Buckets at the bottom
+            const bucketWidth = canvas.width / MULTIPLIERS.length;
+            const bucketHeight = 60;
+            const bucketY = canvas.height - bucketHeight;
+
+            for (let i = 0; i < MULTIPLIERS.length; i++) {
+                buckets.push({
+                    x: i * bucketWidth,
+                    y: bucketY,
+                    w: bucketWidth,
+                    h: bucketHeight,
+                    mult: MULTIPLIERS[i],
+                    color: BUCKET_COLORS[i],
+                    flash: 0
+                });
+            }
+        }
+
+        // --- Classes ---
+        class Ball {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2; 
+                this.vy = 0;
+                this.r = BALL_RADIUS;
+                this.color = '#facc15';
+                this.active = true;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            update() {
+                this.vy += GRAVITY;
+                this.vx *= FRICTION;
+                this.vy *= FRICTION;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Wall bounds
+                if (this.x - this.r < 0) {
+                    this.x = this.r;
+                    this.vx *= -BOUNCE;
+                } else if (this.x + this.r > canvas.width) {
+                    this.x = canvas.width - this.r;
+                    this.vx *= -BOUNCE;
+                }
+
+                // Bucket Check
+                if (this.y > canvas.height - 60) {
+                    this.checkBucket();
+                }
+
+                // Failsafe if it falls through
+                if (this.y > canvas.height + 50) this.active = false;
+            }
+
+            checkBucket() {
+                for (let b of buckets) {
+                    if (this.x > b.x && this.x < b.x + b.w) {
+                        score += b.mult * 100;
+                        scoreDisplay.textContent = score;
+                        b.flash = 1.0; 
+                        createFloatingText(`+${b.mult * 100}`, this.x, this.y - 20, b.color);
+                        this.active = false;
+                        return;
+                    }
+                }
+            }
+        }
+
+        // --- Visual Effects ---
+        function createFloatingText(text, x, y, color) {
+            particles.push({
+                text: text,
+                x: x, y: y,
+                vy: -2,
+                life: 1.0,
+                color: color,
+                isText: true
+            });
+        }
+
+        function createHitSpark(x, y) {
+            for (let i = 0; i < 5; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 1.0,
+                    color: '#06b6d4',
+                    isText: false
+                });
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                if (p.isText) {
+                    p.y += p.vy;
+                    p.life -= 0.02;
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    ctx.font = "bold 20px Outfit";
+                    ctx.textAlign = "center";
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = p.color;
+                    ctx.fillText(p.text, p.x, p.y);
+                } else {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= 0.05;
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.globalAlpha = 1.0;
+                ctx.shadowBlur = 0;
+
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        // --- Core Loops ---
+        function resolveCollisions() {
+            for (let ball of balls) {
+                if (!ball.active) continue;
+
+                for (let peg of pegs) {
+                    let dx = ball.x - peg.x;
+                    let dy = ball.y - peg.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    let minDist = ball.r + peg.r;
+
+                    if (dist < minDist) {
+                        peg.lit = 1.0; 
+                        createHitSpark(peg.x, peg.y);
+
+                        let nx = dx / dist;
+                        let ny = dy / dist;
+
+                        let overlap = minDist - dist;
+                        ball.x += nx * overlap;
+                        ball.y += ny * overlap;
+
+                        let dot = (ball.vx * nx) + (ball.vy * ny);
+                        let chaosX = (Math.random() - 0.5) * 1.5;
+
+                        ball.vx = (ball.vx - 2 * dot * nx) * BOUNCE + chaosX;
+                        ball.vy = (ball.vy - 2 * dot * ny) * BOUNCE;
+                    }
+                }
+            }
+        }
+
+        function drawEnvironment() {
+            ctx.fillStyle = "rgba(10, 15, 26, 0.4)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let peg of pegs) {
+                ctx.beginPath();
+                ctx.arc(peg.x, peg.y, peg.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(6, 182, 212, ${0.4 + peg.lit * 0.6})`;
+
+                if (peg.lit > 0) {
+                    ctx.shadowBlur = 15 * peg.lit;
+                    ctx.shadowColor = '#06b6d4';
+                    peg.lit -= 0.05; 
+                    if (peg.lit < 0) peg.lit = 0;
+                } else {
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            for (let b of buckets) {
+                ctx.strokeStyle = "rgba(255,255,255,0.2)";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y);
+                ctx.lineTo(b.x, canvas.height);
+                ctx.stroke();
+
+                ctx.fillStyle = b.color;
+                ctx.globalAlpha = 0.1 + (b.flash * 0.4);
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+
+                if (b.flash > 0) {
+                    b.flash -= 0.05;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = b.color;
+                }
+
+                ctx.globalAlpha = 1.0;
+                ctx.fillStyle = "white";
+                ctx.font = "bold 20px Outfit";
+                ctx.textAlign = "center";
+                ctx.fillText(`${b.mult}x`, b.x + b.w / 2, b.y + b.h / 2 + 7);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function loop() {
+            if (!gameActive) return;
+
+            drawEnvironment();
+
+            // FIX: Safely check for Game Over conditions inside the loop
+            for (let i = balls.length - 1; i >= 0; i--) {
+                if (!balls[i].active) {
+                    balls.splice(i, 1);
+                    
+                    // If no balls are left in hand AND no balls are bouncing on screen = Game Over
+                    if (ballsLeft === 0 && balls.length === 0) {
+                        endGame();
+                    }
+                }
+            }
+
+            for (let ball of balls) {
+                ball.update();
+                ball.draw();
+            }
+
+            resolveCollisions();
+            updateParticles();
+
+            animationId = requestAnimationFrame(loop);
+        }
+
+        // --- Controls & State ---
+        function dropBall(clientX) {
+            if (!gameActive || ballsLeft <= 0) return;
+
+            // FIX: Map coordinates relative to canvas, not wrapper
+            const rect = canvas.getBoundingClientRect(); 
+            const scaleX = canvas.width / rect.width;
+            let dropX = (clientX - rect.left) * scaleX;
+
+            if (dropX < BALL_RADIUS) dropX = BALL_RADIUS;
+            if (dropX > canvas.width - BALL_RADIUS) dropX = canvas.width - BALL_RADIUS;
+
+            balls.push(new Ball(dropX, 20));
+            ballsLeft--;
+            ballsDisplay.textContent = ballsLeft;
+        }
+
+        // FIX: Attach events directly to the canvas so it doesn't swallow modal clicks
+        canvas.addEventListener('touchstart', (e) => {
+            if (!gameActive) return;
+            e.preventDefault();
+            dropBall(e.touches[0].clientX);
+        }, { passive: false });
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (!gameActive) return;
+            dropBall(e.clientX);
+        });
+
+        function startGame() {
+            if (gameActive) return; // Prevent double loops
+            cancelAnimationFrame(animationId);
+
+            score = 0;
+            ballsLeft = 20;
+            balls = [];
+            particles = [];
+            scoreDisplay.textContent = score;
+            ballsDisplay.textContent = ballsLeft;
+
+            buildBoard();
+
+            gameActive = true;
+            guideModal.classList.add("hidden");
+            gameOverModal.classList.add("hidden");
+            loop();
+        }
+
+        function endGame() {
+            gameActive = false;
+            document.getElementById("finalScoreDisplay").textContent = score;
+            gameOverModal.classList.remove("hidden");
+        }
+
+        // --- UI Buttons ---
+        document.getElementById("startGameBtn").addEventListener("click", startGame);
+        document.getElementById("tryAgainBtn").addEventListener("click", startGame);
+        document.getElementById("helpBtn").addEventListener("click", () => {
+            gameActive = false;
+            guideModal.classList.remove("hidden");
+        });
+
+        // --- Fullscreen API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Initial setup frame
+        buildBoard();
+        ctx.fillStyle = "#0a0f1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawEnvironment();
+
+    </script>
+</body>
+
+</html>

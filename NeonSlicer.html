@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Slicer | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --blade-color: #06b6d4;
+            --bomb-color: #f43f5e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0a0f1a 80%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+            position: relative;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 10px;
+            gap: 15px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .score-lives {
+            color: #f43f5e;
+        }
+
+        /* --- Canvas --- */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        @media (max-width: 600px) {
+            .canvas-wrapper {
+                aspect-ratio: 4 / 5;
+            }
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--blade-color);
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .swipe-anim {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .swipe-anim i {
+            animation: slashAnim 1s infinite;
+            color: var(--blade-color);
+            text-shadow: 0 0 10px var(--blade-color);
+        }
+
+        @keyframes slashAnim {
+            0% {
+                transform: translate(-30px, 30px) scale(1);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(30px, -30px) scale(1.2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i
+                    class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Score</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Integrity</div>
+                <div class="score-val score-lives" id="livesDisplay">
+                    <i class="fa-solid fa-heart"></i>
+                    <i class="fa-solid fa-heart"></i>
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+            <div class="modal-overlay" id="guideModal">
+                <div class="modal-box">
+                    <h2>Neon Slicer</h2>
+                    <div class="swipe-anim"><i class="fa-solid fa-hand-pointer"></i></div>
+                    <p><strong>Move your mouse</strong> or <strong>swipe your finger</strong> to slice the glowing
+                        shapes.</p>
+                    <p style="color: #f43f5e; font-weight: bold;">DO NOT SLICE THE RED BOMBS!</p>
+                    <p style="font-size: 0.9rem;">Miss a shape and you lose a life.</p>
+                    <button class="play-btn" id="startGameBtn">Power On Blade</button>
+                </div>
+            </div>
+
+            <div class="modal-overlay hidden" id="gameOverModal">
+                <div class="modal-box">
+                    <h2 id="endTitle" style="color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);">System
+                        Failure</h2>
+                    <p style="font-size: 1.5rem; color: white;">Score: <span id="finalScoreDisplay">0</span></p>
+                    <button class="play-btn" id="tryAgainBtn" style="background: #f43f5e;">Reboot System</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const livesDisplay = document.getElementById("livesDisplay");
+        const guideModal = document.getElementById("guideModal");
+        const gameOverModal = document.getElementById("gameOverModal");
+        const endTitle = document.getElementById("endTitle");
+
+        // --- Game State ---
+        let gameActive = false;
+        let animationId;
+        let score = 0;
+        let lives = 3;
+        let frames = 0;
+
+        // Arrays
+        let targets = [];
+        let particles = [];
+        let slices = [];
+        let bladeTrail = [];
+
+        // Physics Constants
+        const GRAVITY = 0.15;
+        const NEON_COLORS = ['#2ecc71', '#eab308', '#3b82f6', '#d946ef'];
+
+        // --- Math Helpers ---
+        function distSq(p, w) {
+            return Math.pow(p.x - w.x, 2) + Math.pow(p.y - w.y, 2);
+        }
+
+        function distToSegmentSquared(p, v, w) {
+            let l2 = distSq(v, w);
+            if (l2 === 0) return distSq(p, v);
+            let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+            t = Math.max(0, Math.min(1, t));
+            return distSq(p, { x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y) });
+        }
+
+        // --- Classes ---
+        class Target {
+            constructor() {
+                this.r = 30 + Math.random() * 20;
+                this.x = this.r + Math.random() * (canvas.width - this.r * 2);
+                this.y = canvas.height + this.r;
+
+                let targetX = canvas.width / 2 + (Math.random() * 200 - 100);
+                this.vx = (targetX - this.x) / 120;
+                this.vy = -(12 + Math.random() * 4);
+
+                this.isBomb = Math.random() < 0.2;
+                this.color = this.isBomb ? '#f43f5e' : NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)];
+                this.shapeType = this.isBomb ? 0 : Math.floor(Math.random() * 3);
+                this.angle = 0;
+                this.rotSpeed = (Math.random() - 0.5) * 0.1;
+                this.sliced = false;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+
+                ctx.beginPath();
+                if (this.isBomb) {
+                    for (let i = 0; i < 12; i++) {
+                        let a = i * (Math.PI / 6);
+                        let rad = i % 2 === 0 ? this.r : this.r * 0.6;
+                        ctx.lineTo(rad * Math.cos(a), rad * Math.sin(a));
+                    }
+                    ctx.fillStyle = "rgba(244, 63, 94, 0.2)";
+                    ctx.fill();
+                } else if (this.shapeType === 0) {
+                    ctx.arc(0, 0, this.r, 0, Math.PI * 2);
+                } else if (this.shapeType === 1) {
+                    ctx.rect(-this.r, -this.r, this.r * 2, this.r * 2);
+                } else {
+                    ctx.moveTo(0, -this.r);
+                    ctx.lineTo(this.r, this.r);
+                    ctx.lineTo(-this.r, this.r);
+                }
+                ctx.closePath();
+                ctx.stroke();
+
+                if (!this.isBomb) {
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                    ctx.globalAlpha = 0.5;
+                }
+                ctx.restore();
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += GRAVITY;
+                this.angle += this.rotSpeed;
+            }
+        }
+
+        class Half {
+            constructor(x, y, vx, vy, color, shapeType, r, angle, dir) {
+                this.x = x; this.y = y;
+                this.vx = vx + (dir * 2);
+                this.vy = vy;
+                this.color = color;
+                this.shapeType = shapeType;
+                this.r = r;
+                this.angle = angle;
+                this.rotSpeed = dir * 0.1;
+                this.life = 1.0;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+
+                ctx.beginPath();
+                if (this.shapeType === 0) {
+                    ctx.arc(0, 0, this.r, 0, Math.PI);
+                } else if (this.shapeType === 1) {
+                    ctx.rect(-this.r, 0, this.r * 2, this.r);
+                } else {
+                    ctx.moveTo(-this.r, 0);
+                    ctx.lineTo(this.r, 0);
+                    ctx.lineTo(0, -this.r);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += GRAVITY;
+                this.angle += this.rotSpeed;
+                this.life -= 0.02;
+            }
+        }
+
+        // --- Core Functions ---
+        function spawnTargets() {
+            let rate = Math.max(30, 90 - Math.floor(score / 50));
+            if (frames % rate === 0) {
+                let count = 1 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < count; i++) {
+                    targets.push(new Target());
+                }
+            }
+        }
+
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 20; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+
+        function updateLivesUI() {
+            let html = '';
+            for (let i = 0; i < lives; i++) html += '<i class="fa-solid fa-heart"></i> ';
+            livesDisplay.innerHTML = html;
+        }
+
+        function drawBlade() {
+            if (bladeTrail.length < 2) return;
+
+            ctx.beginPath();
+            ctx.moveTo(bladeTrail[0].x, bladeTrail[0].y);
+
+            for (let i = 1; i < bladeTrail.length; i++) {
+                ctx.lineTo(bladeTrail[i].x, bladeTrail[i].y);
+            }
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#06b6d4';
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#06b6d4';
+            ctx.stroke();
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+        }
+
+        function checkSlices() {
+            if (bladeTrail.length < 2) return;
+
+            // Check every segment of the trail to ensure fast swipes don't miss targets
+            for (let b = 1; b < bladeTrail.length; b++) {
+                let p1 = bladeTrail[b - 1];
+                let p2 = bladeTrail[b];
+
+                for (let i = targets.length - 1; i >= 0; i--) {
+                    let t = targets[i];
+                    let dist2 = distToSegmentSquared({ x: t.x, y: t.y }, p1, p2);
+                    let hitbox = (t.r + 15) * (t.r + 15); // Very forgiving hitbox
+
+                    if (dist2 < hitbox) {
+                        if (t.isBomb) {
+                            createExplosion(t.x, t.y, t.color);
+                            endTitle.textContent = "Bomb Triggered!";
+                            endGame();
+                            return;
+                        } else {
+                            score += 10;
+                            scoreDisplay.textContent = score;
+                            createExplosion(t.x, t.y, t.color);
+
+                            slices.push(new Half(t.x, t.y, t.vx, t.vy, t.color, t.shapeType, t.r, t.angle, -1));
+                            slices.push(new Half(t.x, t.y, t.vx, t.vy, t.color, t.shapeType, t.r, t.angle, 1));
+
+                            targets.splice(i, 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            if (!gameActive) return; // Strict lock against double loops
+
+            ctx.fillStyle = "rgba(10, 15, 26, 0.4)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            spawnTargets();
+
+            // Manage Targets
+            for (let i = targets.length - 1; i >= 0; i--) {
+                let t = targets[i];
+                t.update();
+                t.draw();
+
+                // Check if fell off bottom
+                if (t.y - t.r > canvas.height && t.vy > 0) {
+                    if (!t.isBomb) {
+                        lives--;
+                        updateLivesUI();
+                        if (lives <= 0) {
+                            endTitle.textContent = "Targets Missed!";
+                            endGame();
+                            return;
+                        }
+                    }
+                    targets.splice(i, 1);
+                }
+            }
+
+            // Manage Halves
+            for (let i = slices.length - 1; i >= 0; i--) {
+                slices[i].update();
+                slices[i].draw();
+                if (slices[i].life <= 0) slices.splice(i, 1);
+            }
+
+            // Manage Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.yv;
+                p.life -= 0.03;
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1.0;
+
+            // --- Time-Based Blade Management ---
+            let now = Date.now();
+            // Filter out any blade points older than 150ms
+            bladeTrail = bladeTrail.filter(pt => now - pt.time < 150);
+
+            if (bladeTrail.length >= 2) {
+                drawBlade();
+                checkSlices();
+            }
+
+            frames++;
+            animationId = requestAnimationFrame(loop);
+        }
+
+        // --- State Management ---
+        function startGame() {
+            if (gameActive) return; // Prevent double starting
+
+            score = 0;
+            lives = 3;
+            frames = 0;
+            targets = [];
+            particles = [];
+            slices = [];
+            bladeTrail = [];
+
+            scoreDisplay.textContent = score;
+            updateLivesUI();
+
+            gameActive = true;
+            guideModal.classList.add("hidden");
+            gameOverModal.classList.add("hidden");
+
+            loop();
+        }
+
+        function endGame() {
+            gameActive = false; // Immediately kills the animation loop
+            document.getElementById("finalScoreDisplay").textContent = score;
+            gameOverModal.classList.remove("hidden");
+        }
+
+        // --- Controls (Flawless Trackpad & Mobile Implementation) ---
+        function getCanvasPos(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY,
+                time: Date.now() // Record exactly when this movement happened
+            };
+        }
+
+        function addBladePoint(x, y) {
+            if (!gameActive) return;
+            bladeTrail.push(getCanvasPos(x, y));
+        }
+
+        // Touch Events (Bound strictly to canvas)
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevents page scrolling
+            addBladePoint(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            addBladePoint(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+
+        // Mouse/Trackpad Events
+        canvas.addEventListener('mousemove', (e) => {
+            addBladePoint(e.clientX, e.clientY);
+        });
+
+        // --- UI Buttons (Touch Proofing) ---
+        function handleButtonClick(e) {
+            e.preventDefault(); // Stops touch events from double-firing
+            e.stopPropagation();
+            startGame();
+        }
+
+        const startBtn = document.getElementById("startGameBtn");
+        const tryAgainBtn = document.getElementById("tryAgainBtn");
+
+        startBtn.addEventListener("click", handleButtonClick);
+        startBtn.addEventListener("touchstart", handleButtonClick, { passive: false });
+
+        tryAgainBtn.addEventListener("click", handleButtonClick);
+        tryAgainBtn.addEventListener("touchstart", handleButtonClick, { passive: false });
+
+        document.getElementById("helpBtn").addEventListener("click", () => {
+            gameActive = false;
+            guideModal.classList.remove("hidden");
+        });
+
+        // --- Fullscreen API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Initial background render
+        ctx.fillStyle = "#0a0f1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    </script>
+</body>
+
+</html>

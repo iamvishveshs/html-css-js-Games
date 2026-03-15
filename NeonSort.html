@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Sort | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --tube-border: rgba(255, 255, 255, 0.3);
+            --tube-bg: rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0a0f1a 80%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* Level Selector */
+        .level-select {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 5px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-right: 5px;
+        }
+
+        .level-select button {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        .level-select span {
+            font-weight: bold;
+            margin: 0 8px;
+            font-size: 1rem;
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 10px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* --- Tubes (Flasks) --- */
+        .board {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            position: relative;
+        }
+
+        .tube-wrapper {
+            position: relative;
+            height: 180px;
+            width: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .tube {
+            width: 100%;
+            height: 150px;
+            border: 3px solid var(--tube-border);
+            border-top: none;
+            border-radius: 0 0 25px 25px;
+            background: var(--tube-bg);
+            display: flex;
+            flex-direction: column-reverse; /* Bottom to top */
+            overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Lift the tube slightly when selected */
+        .tube-wrapper.selected .tube {
+            transform: translateY(-20px);
+            box-shadow: 0 15px 25px rgba(59, 130, 246, 0.5), inset 0 0 15px rgba(0, 0, 0, 0.8);
+            border-color: var(--accent);
+        }
+
+        /* Glowing animation for completed tubes */
+        .tube-complete .tube {
+            animation: completePulse 2s infinite alternate;
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes completePulse {
+            0% { box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 255, 255, 0.3); }
+            100% { box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 255, 255, 0.8); }
+        }
+
+        /* The Neon Liquid Blocks */
+        .liquid {
+            width: 100%;
+            height: 25%; /* 4 blocks fill 100% */
+            transition: height 0.35s ease-in-out, background-color 0.3s;
+            position: relative;
+        }
+
+        /* Add a slight highlight to top of liquid */
+        .liquid::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .guide-anim {
+            font-size: 2.5rem;
+            color: #2ecc71;
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .guide-anim i {
+            animation: tapPour 2s infinite ease-in-out;
+            color: var(--accent);
+        }
+
+        @keyframes tapPour {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-15px); color: #f43f5e; }
+            100% { transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+
+        <div class="action-btns">
+            <div class="level-select">
+                <button id="lvlDown"><i class="fa-solid fa-minus"></i></button>
+                <span id="diffDisplay">Easy</span>
+                <button id="lvlUp"><i class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="restartBtn" title="Restart"><i class="fa-solid fa-rotate-right"></i></button>
+            <button class="icon-btn" id="helpBtn" title="Rules"><i class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Moves</div>
+                <div class="score-val" id="moveDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Tubes</div>
+                <div class="score-val" id="tubeDisplay">5</div>
+            </div>
+        </div>
+
+        <div class="board" id="board">
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="guideModal">
+        <div class="modal-box">
+            <h2>Neon Sort</h2>
+            <div class="guide-anim">
+                <i class="fa-solid fa-flask"></i>
+                <i class="fa-solid fa-arrow-right"></i>
+                <i class="fa-solid fa-flask"></i>
+            </div>
+            <p style="text-align: left;">
+                1. Tap a tube to select the top liquid.<br><br>
+                2. Tap another tube to pour.<br><br>
+                3. You can only pour if the target tube is empty, or the top colors match.<br><br>
+                <strong>Goal:</strong> Sort all colors so each tube contains only one color.
+            </p>
+            <button class="play-btn" id="startGameBtn">Start Sorting</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="victoryModal">
+        <div class="modal-box">
+            <h2 style="color: #2ecc71; text-shadow: 0 0 15px rgba(46, 204, 113, 0.6);">Puzzle Solved!</h2>
+            <p style="font-size: 1.2rem; text-align: center;">Completed in <strong id="finalMoves" style="color: white;">0</strong> moves.</p>
+            <button class="play-btn" id="playAgainBtn" style="background: #2ecc71; margin-top: 15px;">Next Level</button>
+        </div>
+    </div>
+
+    <script>
+        const board = document.getElementById("board");
+        const moveDisplay = document.getElementById("moveDisplay");
+        const tubeDisplay = document.getElementById("tubeDisplay");
+        const diffDisplay = document.getElementById("diffDisplay");
+
+        const guideModal = document.getElementById("guideModal");
+        const victoryModal = document.getElementById("victoryModal");
+
+        // The Neon Colors mapping
+        const COLORS = {
+            'pink': '#f43f5e',
+            'blue': '#3b82f6',
+            'green': '#2ecc71',
+            'yellow': '#eab308',
+            'cyan': '#06b6d4',
+            'purple': '#a855f7',
+            'orange': '#f97316',
+            'red': '#ef4444'
+        };
+        const COLOR_KEYS = Object.keys(COLORS);
+
+        // --- Game State ---
+        let difficulties = [
+            { name: "Easy", filledTubes: 3, emptyTubes: 2 },
+            { name: "Med", filledTubes: 5, emptyTubes: 2 },
+            { name: "Hard", filledTubes: 7, emptyTubes: 2 },
+            { name: "Expert", filledTubes: 8, emptyTubes: 2 }
+        ];
+
+        let currentDiffIndex = 0;
+        let tubes = []; 
+        let selectedTubeIndex = null;
+        let moves = 0;
+        let isAnimating = false;
+
+        // --- Initialization ---
+        function setDifficulty() {
+            let diff = difficulties[currentDiffIndex];
+            diffDisplay.textContent = diff.name;
+            tubeDisplay.textContent = diff.filledTubes + diff.emptyTubes;
+            initGame();
+        }
+
+        function initGame() {
+            moves = 0;
+            moveDisplay.textContent = moves;
+            selectedTubeIndex = null;
+            isAnimating = false;
+            victoryModal.classList.add("hidden");
+
+            generatePuzzle();
+            renderBoard();
+        }
+
+        function generatePuzzle() {
+            let diff = difficulties[currentDiffIndex];
+            let numColors = diff.filledTubes;
+            let totalTubes = diff.filledTubes + diff.emptyTubes;
+
+            let colorPool = [];
+            for (let i = 0; i < numColors; i++) {
+                for (let j = 0; j < 4; j++) {
+                    colorPool.push(COLOR_KEYS[i]);
+                }
+            }
+
+            // Shuffle the pool (Fisher-Yates)
+            for (let i = colorPool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [colorPool[i], colorPool[j]] = [colorPool[j], colorPool[i]];
+            }
+
+            // Distribute into tubes
+            tubes = [];
+            let poolIndex = 0;
+            for (let i = 0; i < totalTubes; i++) {
+                let tube = [];
+                if (i < diff.filledTubes) {
+                    for (let j = 0; j < 4; j++) {
+                        tube.push(colorPool[poolIndex]);
+                        poolIndex++;
+                    }
+                }
+                tubes.push(tube);
+            }
+        }
+
+        // --- UI Rendering ---
+        function renderBoard() {
+            board.innerHTML = "";
+
+            tubes.forEach((tubeArray, index) => {
+                const wrapper = document.createElement("div");
+                wrapper.classList.add("tube-wrapper");
+                wrapper.id = `tube-wrapper-${index}`; // ID mapped for animation targeting
+                
+                if (selectedTubeIndex === index) wrapper.classList.add("selected");
+
+                // Check if this tube is fully completed
+                if (tubeArray.length === 4 && tubeArray.every(val => val === tubeArray[0])) {
+                    wrapper.classList.add("tube-complete");
+                }
+
+                wrapper.addEventListener("click", () => handleTubeClick(index));
+
+                const tubeEl = document.createElement("div");
+                tubeEl.classList.add("tube");
+
+                // Render liquids
+                tubeArray.forEach(colorKey => {
+                    const liquid = document.createElement("div");
+                    liquid.classList.add("liquid");
+                    liquid.style.backgroundColor = COLORS[colorKey];
+                    liquid.style.boxShadow = `inset 0 0 10px rgba(255,255,255,0.3), 0 0 15px ${COLORS[colorKey]}`;
+                    liquid.style.height = "25%"; // Base height mapping
+                    tubeEl.appendChild(liquid);
+                });
+
+                wrapper.appendChild(tubeEl);
+                board.appendChild(wrapper);
+            });
+        }
+
+        // --- Gameplay Logic ---
+        function handleTubeClick(index) {
+            if (isAnimating) return; // Ignore taps while an animation is playing
+
+            if (selectedTubeIndex === null) {
+                // Select a tube
+                if (tubes[index].length > 0) {
+                    // Prevent selecting a completed tube
+                    if (tubes[index].length === 4 && tubes[index].every(val => val === tubes[index][0])) return;
+                    
+                    selectedTubeIndex = index;
+                    renderBoard(); 
+                }
+            } else {
+                if (selectedTubeIndex === index) {
+                    // Deselect
+                    selectedTubeIndex = null;
+                    renderBoard();
+                } else {
+                    attemptPour(selectedTubeIndex, index);
+                }
+            }
+        }
+
+        function attemptPour(sourceIdx, targetIdx) {
+            let sourceTube = tubes[sourceIdx];
+            let targetTube = tubes[targetIdx];
+
+            if (sourceTube.length === 0) return;
+            if (targetTube.length === 4) {
+                selectedTubeIndex = null;
+                renderBoard();
+                return;
+            }
+
+            let colorToMove = sourceTube[sourceTube.length - 1];
+
+            // Validate color match
+            if (targetTube.length > 0 && targetTube[targetTube.length - 1] !== colorToMove) {
+                selectedTubeIndex = null;
+                renderBoard();
+                return;
+            }
+
+            let blocksToMove = 0;
+            for (let i = sourceTube.length - 1; i >= 0; i--) {
+                if (sourceTube[i] === colorToMove) {
+                    blocksToMove++;
+                } else {
+                    break;
+                }
+            }
+
+            let spaceAvailable = 4 - targetTube.length;
+            let actualMoves = Math.min(blocksToMove, spaceAvailable);
+
+            if (actualMoves > 0) {
+                isAnimating = true;
+
+                // Grab DOM elements for animation
+                let srcWrapper = document.getElementById(`tube-wrapper-${sourceIdx}`);
+                let tgtWrapper = document.getElementById(`tube-wrapper-${targetIdx}`);
+                let srcTubeEl = srcWrapper.querySelector('.tube');
+                let tgtTubeEl = tgtWrapper.querySelector('.tube');
+
+                let srcRect = srcWrapper.getBoundingClientRect();
+                let tgtRect = tgtWrapper.getBoundingClientRect();
+
+                // Calculate Flight Path
+                let dx = tgtRect.left - srcRect.left;
+                // Offset shifts the pouring tube's mouth directly over the target tube's mouth
+                let offset = dx >= 0 ? -20 : 20; 
+                let dy = tgtRect.top - srcRect.top - 60; // Lift up and over
+                let tilt = dx >= 0 ? 60 : -60;
+
+                // Step 1: Fly over and Tilt
+                srcTubeEl.style.transition = 'transform 0.4s ease-in-out, box-shadow 0.4s ease';
+                srcTubeEl.style.transformOrigin = 'top center';
+                srcTubeEl.style.transform = `translate(${dx + offset}px, ${dy}px) rotate(${tilt}deg)`;
+                srcTubeEl.style.zIndex = '100';
+
+                setTimeout(() => {
+                    // Update Logical Arrays behind the scenes
+                    for (let i = 0; i < actualMoves; i++) {
+                        targetTube.push(sourceTube.pop());
+                    }
+
+                    // Step 2: Pouring Liquid Animation
+                    // Find the elements to shrink in the source
+                    let liquidsToRemove = [];
+                    for(let i = 0; i < actualMoves; i++) {
+                        let l = srcTubeEl.children[srcTubeEl.children.length - 1 - i];
+                        if(l) liquidsToRemove.push(l);
+                    }
+                    
+                    // Shrink them
+                    liquidsToRemove.forEach(l => {
+                        l.style.height = '0%';
+                    });
+
+                    // Build new elements to grow in the target
+                    for(let i = 0; i < actualMoves; i++) {
+                        let liquid = document.createElement("div");
+                        liquid.classList.add("liquid");
+                        liquid.style.backgroundColor = COLORS[colorToMove];
+                        liquid.style.boxShadow = `inset 0 0 10px rgba(255,255,255,0.3), 0 0 15px ${COLORS[colorToMove]}`;
+                        liquid.style.height = '0%'; // Start empty
+                        tgtTubeEl.appendChild(liquid);
+                        
+                        // Force browser to register the 0 height before expanding to 25%
+                        void liquid.offsetWidth; 
+                        liquid.style.height = '25%';
+                    }
+
+                    // Step 3: Return the tube back home
+                    setTimeout(() => {
+                        // Remove the empty wrappers from the source tube
+                        liquidsToRemove.forEach(l => l.remove());
+                        
+                        // Fly back
+                        srcTubeEl.style.transform = '';
+                        
+                        setTimeout(() => {
+                            srcTubeEl.style.zIndex = '';
+                            srcTubeEl.style.transformOrigin = '';
+                            
+                            moves++;
+                            moveDisplay.textContent = moves;
+                            selectedTubeIndex = null;
+
+                            // Re-render completely guarantees no lingering visual glitches
+                            renderBoard(); 
+                            
+                            isAnimating = false;
+                            checkWin();
+                        }, 400); // 400ms Return flight
+
+                    }, 350); // 350ms Pouring duration
+
+                }, 400); // 400ms Outbound flight
+
+            } else {
+                selectedTubeIndex = null;
+                renderBoard();
+            }
+        }
+
+        function checkWin() {
+            let diff = difficulties[currentDiffIndex];
+            let requiredFull = diff.filledTubes;
+            let fullTubes = 0;
+
+            for (let i = 0; i < tubes.length; i++) {
+                let tube = tubes[i];
+                if (tube.length === 4) {
+                    if (tube[0] === tube[1] && tube[1] === tube[2] && tube[2] === tube[3]) {
+                        fullTubes++;
+                    }
+                } else if (tube.length > 0) {
+                    return; // Found a partially filled tube, game is not over
+                }
+            }
+
+            if (fullTubes === requiredFull) {
+                document.getElementById("finalMoves").textContent = moves;
+                victoryModal.classList.remove("hidden");
+            }
+        }
+
+        // --- Buttons ---
+        document.getElementById("startGameBtn").addEventListener("click", () => {
+            guideModal.classList.add("hidden");
+            setDifficulty();
+        });
+
+        document.getElementById("restartBtn").addEventListener("click", () => {
+            if (!isAnimating) setDifficulty();
+        });
+
+        document.getElementById("playAgainBtn").addEventListener("click", () => {
+            setDifficulty();
+        });
+
+        document.getElementById("helpBtn").addEventListener("click", () => {
+            if (!isAnimating) guideModal.classList.remove("hidden");
+        });
+
+        // Level Selectors
+        document.getElementById("lvlUp").addEventListener("click", () => {
+            if (!isAnimating && currentDiffIndex < difficulties.length - 1) {
+                currentDiffIndex++; setDifficulty();
+            }
+        });
+        
+        document.getElementById("lvlDown").addEventListener("click", () => {
+            if (!isAnimating && currentDiffIndex > 0) {
+                currentDiffIndex--; setDifficulty();
+            }
+        });
+
+        // --- Fullscreen API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Initialize behind modal
+        setDifficulty();
+
+    </script>
+</body>
+
+</html>
