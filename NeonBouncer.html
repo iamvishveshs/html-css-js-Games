@@ -15,13 +15,9 @@
             --text-main: #f8fafc;
             --accent: #3b82f6;
             --bouncer-color: #facc15;
-            /* Neon Yellow */
             --plat-color: #2ecc71;
-            /* Neon Green */
             --plat-moving: #06b6d4;
-            /* Neon Cyan */
             --plat-fragile: #f43f5e;
-            /* Neon Red */
         }
 
         * {
@@ -40,7 +36,6 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            /* overflow: hidden; */
             background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0a0f1a 80%);
         }
 
@@ -139,13 +134,11 @@
             width: 100%;
             max-width: 450px;
             aspect-ratio: 9 / 16;
-            /* Portrait orientation for vertical jumping */
             background: #000;
             border-radius: 16px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.1);
             overflow: hidden;
-            touch-action: none;
         }
 
         canvas {
@@ -240,13 +233,8 @@
         }
 
         @keyframes slideDrag {
-            0% {
-                transform: translateX(-30px);
-            }
-
-            100% {
-                transform: translateX(30px);
-            }
+            0% { transform: translateX(-30px); }
+            100% { transform: translateX(30px); }
         }
 
         .plat-guide {
@@ -272,8 +260,7 @@
         <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
         <div class="action-btns">
             <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
-            <button class="icon-btn" id="helpBtn" title="How to Play"><i
-                    class="fa-solid fa-circle-question"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i class="fa-solid fa-circle-question"></i></button>
         </div>
     </header>
 
@@ -299,18 +286,15 @@
                     <p><strong>Drag your finger</strong> (or use mouse/arrows) to move horizontally.</p>
 
                     <div class="plat-guide">
-                        <div class="pg-box"
-                            style="background: var(--plat-color); box-shadow: 0 0 8px var(--plat-color);"></div>
+                        <div class="pg-box" style="background: var(--plat-color); box-shadow: 0 0 8px var(--plat-color);"></div>
                         <span>Normal Platform</span>
                     </div>
                     <div class="plat-guide">
-                        <div class="pg-box"
-                            style="background: var(--plat-moving); box-shadow: 0 0 8px var(--plat-moving);"></div>
+                        <div class="pg-box" style="background: var(--plat-moving); box-shadow: 0 0 8px var(--plat-moving);"></div>
                         <span>Moving Platform</span>
                     </div>
                     <div class="plat-guide" style="margin-bottom: 25px;">
-                        <div class="pg-box"
-                            style="background: var(--plat-fragile); box-shadow: 0 0 8px var(--plat-fragile);"></div>
+                        <div class="pg-box" style="background: var(--plat-fragile); box-shadow: 0 0 8px var(--plat-fragile);"></div>
                         <span>Fragile (Breaks!)</span>
                     </div>
 
@@ -381,10 +365,8 @@
 
                 // Apply Horizontal Movement
                 if (usingTouchOrMouse) {
-                    // Smooth follow for touch/mouse
                     this.x += (mouseX - this.x) * 0.2;
                 } else {
-                    // Keyboard
                     if (keys.left) this.x -= this.speed;
                     if (keys.right) this.x += this.speed;
                 }
@@ -393,7 +375,7 @@
                 if (this.x < 0) this.x = canvas.width;
                 if (this.x > canvas.width) this.x = 0;
 
-                // Death (Fell off screen)
+                // Death
                 if (this.y > canvas.height + 50) {
                     endGame();
                 }
@@ -413,7 +395,6 @@
                 this.x = Math.random() * (canvas.width - this.width);
                 this.y = y;
 
-                // Determine Type based on score/height
                 let rand = Math.random();
                 if (score > 1000 && rand < 0.2) {
                     this.type = 'fragile';
@@ -444,7 +425,7 @@
                 if (this.type === 'moving') {
                     this.x += this.dx;
                     if (this.x <= 0 || this.x + this.width >= canvas.width) {
-                        this.dx *= -1; // Bounce off walls
+                        this.dx *= -1;
                     }
                 }
             }
@@ -452,14 +433,12 @@
 
         function createStartingPlatforms() {
             platforms = [];
-            // Base platform so player doesn't fall immediately
             let base = new Platform(canvas.height - 20);
             base.x = canvas.width / 2 - base.width / 2;
             base.type = 'normal';
             base.color = '#2ecc71';
             platforms.push(base);
 
-            // Generate upward
             for (let i = 1; i < 8; i++) {
                 platforms.push(new Platform(canvas.height - i * 85));
             }
@@ -499,7 +478,6 @@
 
         // --- Core Loops ---
         function checkCollisions() {
-            // Only check collisions if falling downwards
             if (player.dy > 0) {
                 for (let i = 0; i < platforms.length; i++) {
                     let plat = platforms[i];
@@ -509,7 +487,6 @@
                         player.y + player.height / 2 > plat.y &&
                         player.y + player.height / 2 < plat.y + plat.height + player.dy) {
 
-                        // Hit a platform
                         if (plat.type === 'fragile') {
                             plat.broken = true;
                             createParticles(plat.x + plat.width / 2, plat.y, 10, plat.color);
@@ -523,31 +500,25 @@
         }
 
         function updateCamera() {
-            // If player goes above middle of screen, push everything down
             if (player.y < canvas.height / 2) {
                 let diff = (canvas.height / 2) - player.y;
                 player.y = canvas.height / 2;
 
-                // Increase score based on height climbed
                 score += Math.floor(diff);
                 scoreDisplay.textContent = score;
 
-                // Move platforms down
                 for (let i = 0; i < platforms.length; i++) {
                     platforms[i].y += diff;
                 }
 
-                // Move particles down
                 for (let i = 0; i < particles.length; i++) {
                     particles[i].y += diff;
                 }
             }
 
-            // Remove platforms that went off bottom, spawn new ones at top
             for (let i = platforms.length - 1; i >= 0; i--) {
                 if (platforms[i].y > canvas.height) {
                     platforms.splice(i, 1);
-                    // Add new platform above the highest one
                     let highestY = Math.min(...platforms.map(p => p.y));
                     platforms.push(new Platform(highestY - (80 + Math.random() * 30)));
                 }
@@ -557,11 +528,9 @@
         function loop() {
             if (!gameActive) return;
 
-            // Background
             ctx.fillStyle = "#0a0f1a";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Update & Draw Platforms
             for (let i = 0; i < platforms.length; i++) {
                 platforms[i].update();
                 platforms[i].draw();
@@ -569,7 +538,6 @@
 
             updateParticles();
 
-            // Player logic
             player.update();
             checkCollisions();
             updateCamera();
@@ -610,27 +578,26 @@
 
         // --- Controls ---
 
-        // Touch / Mouse logic mapped to canvas wrapper coordinates
+        // FIX: Map event coordinates to the canvas directly, rather than the wrapper
         function updateMousePos(clientX) {
             usingTouchOrMouse = true;
-            const rect = canvasWrapper.getBoundingClientRect();
+            const rect = canvas.getBoundingClientRect(); // Target canvas specifically
             const scaleX = canvas.width / rect.width;
             mouseX = (clientX - rect.left) * scaleX;
         }
 
-        // Mobile Touch
-        canvasWrapper.addEventListener("touchstart", (e) => {
+        // FIX: Attach touch events directly to the canvas so it doesn't swallow button clicks
+        canvas.addEventListener("touchstart", (e) => {
             e.preventDefault();
             updateMousePos(e.touches[0].clientX);
         }, { passive: false });
 
-        canvasWrapper.addEventListener("touchmove", (e) => {
-            e.preventDefault(); // crucial to prevent page scrolling while playing
+        canvas.addEventListener("touchmove", (e) => {
+            e.preventDefault(); 
             updateMousePos(e.touches[0].clientX);
         }, { passive: false });
 
-        // PC Mouse Fallback
-        canvasWrapper.addEventListener("mousemove", (e) => {
+        canvas.addEventListener("mousemove", (e) => {
             if (gameActive) updateMousePos(e.clientX);
         });
 
