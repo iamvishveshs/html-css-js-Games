@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Breakout | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --paddle-color: #3b82f6;
+            --ball-color: #f8fafc;
+            --brick-color-1: #f43f5e;
+            --brick-color-2: #8b5cf6;
+            --brick-color-3: #2ecc71;
+            --brick-color-4: #eab308;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .score-lives {
+            color: #f43f5e;
+        }
+
+        /* --- Canvas --- */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 3 / 4;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: #0a0f1a;
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 85%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .drag-animation {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin: 15px 0;
+            animation: dragHand 2s infinite ease-in-out;
+        }
+
+        @keyframes dragHand {
+            0% {
+                transform: translateX(-30px);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(30px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i
+                    class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container" id="gameArea">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Score</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Lives</div>
+                <div class="score-val score-lives" id="livesDisplay">
+                    <i class="fa-solid fa-heart"></i>
+                    <i class="fa-solid fa-heart"></i>
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="450" height="600"></canvas>
+
+            <div class="modal-overlay" id="guideModal">
+                <div class="modal-box">
+                    <h2>Neon Breakout</h2>
+                    <div class="drag-animation"><i class="fa-solid fa-hand-pointer"></i></div>
+                    <p><strong>Drag</strong> your finger/mouse or use <strong>Arrow Keys</strong> to move the paddle.
+                    </p>
+                    <p>Smash all the neon bricks and don't let the ball drop!</p>
+                    <button class="play-btn" id="startGameBtn">Start Breaking</button>
+                </div>
+            </div>
+
+            <div class="modal-overlay hidden" id="gameOverModal">
+                <div class="modal-box">
+                    <h2 style="color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);">Game Over</h2>
+                    <p style="font-size: 1.5rem; color: white;">Final Score: <span id="finalScoreDisplay">0</span></p>
+                    <button class="play-btn" id="tryAgainBtn" style="background: #f43f5e;">Try Again</button>
+                </div>
+            </div>
+
+            <div class="modal-overlay hidden" id="victoryModal">
+                <div class="modal-box">
+                    <h2 style="color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.5);">Level Cleared!</h2>
+                    <p style="font-size: 1.5rem; color: white;">You smashed 'em all!</p>
+                    <button class="play-btn" id="nextLevelBtn" style="background: #2ecc71;">Play Next Level</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const livesDisplay = document.getElementById("livesDisplay");
+        const guideModal = document.getElementById("guideModal");
+        const gameOverModal = document.getElementById("gameOverModal");
+        const victoryModal = document.getElementById("victoryModal");
+
+        // --- Game State ---
+        let gameActive = false;
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+
+        // --- Keyboard Controls State ---
+        let rightPressed = false;
+        let leftPressed = false;
+
+        // --- Physics Objects ---
+        const paddle = {
+            width: 100,
+            height: 12,
+            x: canvas.width / 2 - 50,
+            y: canvas.height - 30,
+            color: '#3b82f6',
+            speed: 7, // Speed for keyboard movement
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.roundRect(this.x, this.y, this.width, this.height, 6);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        };
+
+        const ball = {
+            radius: 8,
+            x: canvas.width / 2,
+            y: canvas.height - 45,
+            dx: 4,
+            dy: -4,
+            speed: 5.5,
+            color: '#f8fafc',
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.closePath();
+                ctx.shadowBlur = 0;
+            },
+            reset() {
+                this.x = canvas.width / 2;
+                this.y = paddle.y - this.radius - 5;
+                paddle.x = canvas.width / 2 - paddle.width / 2;
+                this.dx = 4 * (Math.random() > 0.5 ? 1 : -1);
+                this.dy = -this.speed;
+            }
+        };
+
+        const brickProps = {
+            rows: 5,
+            cols: 6,
+            width: 0,
+            height: 20,
+            padding: 10,
+            offsetTop: 60,
+            offsetLeft: 15,
+            colors: ['#f43f5e', '#8b5cf6', '#3b82f6', '#2ecc71', '#eab308']
+        };
+        brickProps.width = (canvas.width - (brickProps.padding * (brickProps.cols - 1)) - (brickProps.offsetLeft * 2)) / brickProps.cols;
+
+        let bricks = [];
+
+        function initBricks() {
+            bricks = [];
+            for (let c = 0; c < brickProps.cols; c++) {
+                bricks[c] = [];
+                for (let r = 0; r < brickProps.rows; r++) {
+                    bricks[c][r] = { x: 0, y: 0, status: 1, color: brickProps.colors[r % brickProps.colors.length] };
+                }
+            }
+        }
+
+        function drawBricks() {
+            for (let c = 0; c < brickProps.cols; c++) {
+                for (let r = 0; r < brickProps.rows; r++) {
+                    if (bricks[c][r].status === 1) {
+                        let brickX = (c * (brickProps.width + brickProps.padding)) + brickProps.offsetLeft;
+                        let brickY = (r * (brickProps.height + brickProps.padding)) + brickProps.offsetTop;
+                        bricks[c][r].x = brickX;
+                        bricks[c][r].y = brickY;
+
+                        ctx.fillStyle = bricks[c][r].color;
+                        ctx.shadowBlur = 8;
+                        ctx.shadowColor = bricks[c][r].color;
+                        ctx.beginPath();
+                        ctx.roundRect(brickX, brickY, brickProps.width, brickProps.height, 4);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            }
+        }
+
+        // --- Logic & Physics ---
+        function collisionDetection() {
+            let activeBricks = 0;
+            for (let c = 0; c < brickProps.cols; c++) {
+                for (let r = 0; r < brickProps.rows; r++) {
+                    let b = bricks[c][r];
+                    if (b.status === 1) {
+                        activeBricks++;
+                        if (ball.x + ball.radius > b.x &&
+                            ball.x - ball.radius < b.x + brickProps.width &&
+                            ball.y + ball.radius > b.y &&
+                            ball.y - ball.radius < b.y + brickProps.height) {
+
+                            ball.dy = -ball.dy;
+                            b.status = 0;
+                            score += 10;
+                            scoreDisplay.textContent = score;
+                        }
+                    }
+                }
+            }
+
+            if (activeBricks === 0) {
+                gameActive = false;
+                victoryModal.classList.remove("hidden");
+            }
+        }
+
+        function updateLivesUI() {
+            let html = '';
+            for (let i = 0; i < lives; i++) html += '<i class="fa-solid fa-heart"></i> ';
+            livesDisplay.innerHTML = html;
+        }
+
+        function drawBackground() {
+            ctx.fillStyle = "rgba(10, 15, 26, 0.4)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function loop() {
+            if (!gameActive) return;
+            drawBackground();
+            drawBricks();
+            paddle.draw();
+            ball.draw();
+            collisionDetection();
+
+            // Keyboard Paddle Movement
+            if (rightPressed && paddle.x < canvas.width - paddle.width) {
+                paddle.x += paddle.speed;
+            } else if (leftPressed && paddle.x > 0) {
+                paddle.x -= paddle.speed;
+            }
+
+            // Ball Wall Collisions
+            if (ball.x + ball.dx > canvas.width - ball.radius || ball.x + ball.dx < ball.radius) {
+                ball.dx = -ball.dx;
+            }
+            if (ball.y + ball.dy < ball.radius) {
+                ball.dy = -ball.dy;
+            }
+            // Fixed Collision: Ball hits the top of the paddle
+            else if (
+                ball.dy > 0 && // Only bounce if falling downwards
+                ball.y + ball.radius + ball.dy >= paddle.y &&
+                ball.y - ball.radius <= paddle.y + paddle.height &&
+                ball.x + ball.radius >= paddle.x &&
+                ball.x - ball.radius <= paddle.x + paddle.width
+            ) {
+                // Change angle based on where it hit the paddle
+                let collidePoint = ball.x - (paddle.x + paddle.width / 2);
+                collidePoint = collidePoint / (paddle.width / 2);
+                let angle = collidePoint * Math.PI / 3;
+
+                ball.dx = ball.speed * Math.sin(angle);
+                ball.dy = -ball.speed * Math.cos(angle);
+
+                // Prevent ball getting stuck inside paddle
+                ball.y = paddle.y - ball.radius;
+            }
+            // Ball hits the exact bottom of the canvas (Missed the paddle)
+            else if (ball.y + ball.dy > canvas.height - ball.radius) {
+                lives--;
+                updateLivesUI();
+                if (!lives) {
+                    gameActive = false;
+                    document.getElementById("finalScoreDisplay").textContent = score;
+                    gameOverModal.classList.remove("hidden");
+                } else {
+                    ball.reset();
+                }
+            }
+
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- Flow Control ---
+        function startGame() {
+            score = 0;
+            lives = 3;
+            level = 1;
+            scoreDisplay.textContent = score;
+            updateLivesUI();
+            initBricks();
+            ball.reset();
+            guideModal.classList.add("hidden");
+            gameOverModal.classList.add("hidden");
+            victoryModal.classList.add("hidden");
+            gameActive = true;
+            loop();
+        }
+
+        function nextLevel() {
+            level++;
+            ball.speed += 0.5; // Increase difficulty
+            initBricks();
+            ball.reset();
+            victoryModal.classList.add("hidden");
+            gameActive = true;
+            loop();
+        }
+
+        // --- Input Controls (Keyboard, Mouse, Touch) ---
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+
+        // Keyboard Event Listeners
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
+            else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
+        });
+
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "Right" || e.key === "ArrowRight") rightPressed = false;
+            else if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = false;
+        });
+
+        // Mouse/Touch Paddle Movement
+        function movePaddle(clientX) {
+            const rect = canvasWrapper.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            let relativeX = (clientX - rect.left) * scaleX;
+
+            if (relativeX > 0 && relativeX < canvas.width) {
+                paddle.x = relativeX - paddle.width / 2;
+                if (paddle.x < 0) paddle.x = 0;
+                if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
+            }
+        }
+
+        canvasWrapper.addEventListener("mousemove", (e) => {
+            if (gameActive) movePaddle(e.clientX);
+        });
+
+        canvasWrapper.addEventListener("touchmove", (e) => {
+            if (gameActive) {
+                e.preventDefault();
+                movePaddle(e.touches[0].clientX);
+            }
+        }, { passive: false });
+
+        // --- Buttons & Modals ---
+        document.getElementById("startGameBtn").addEventListener("click", startGame);
+        document.getElementById("tryAgainBtn").addEventListener("click", startGame);
+        document.getElementById("nextLevelBtn").addEventListener("click", nextLevel);
+
+        document.getElementById("helpBtn").addEventListener("click", () => {
+            gameActive = false;
+            guideModal.classList.remove("hidden");
+        });
+
+        // --- Fullscreen API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Initial setup render
+        initBricks();
+        ctx.fillStyle = "#0a0f1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        drawBricks();
+        paddle.draw();
+        ball.draw();
+    </script>
+</body>
+
+</html>

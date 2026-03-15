@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Tower | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --peg-color: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* Level Selector */
+        .level-select {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 5px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-right: 10px;
+        }
+
+        .level-select button {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        .level-select span {
+            font-weight: bold;
+            margin: 0 10px;
+            font-size: 1.1rem;
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 10px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* --- Board & Pegs --- */
+        .board {
+            width: 100%;
+            height: 350px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            padding: 20px 10px;
+            position: relative;
+            touch-action: none;
+        }
+
+        /* The Base Line */
+        .board::after {
+            content: '';
+            position: absolute;
+            bottom: 20px;
+            left: 5%;
+            width: 90%;
+            height: 10px;
+            background: var(--peg-color);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        .peg-container {
+            width: 30%;
+            height: 100%;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        /* The actual vertical pole */
+        .peg-container::before {
+            content: '';
+            position: absolute;
+            bottom: 10px;
+            width: 12px;
+            height: 80%;
+            background: var(--peg-color);
+            border-radius: 6px 6px 0 0;
+            z-index: 0;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Hover effect for target drop zones */
+        .peg-container.drag-over::before {
+            background: var(--accent);
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        /* --- Disks --- */
+        .disk {
+            height: 30px;
+            border-radius: 15px;
+            margin-bottom: 2px;
+            z-index: 1;
+            cursor: grab;
+            transition: transform 0.1s;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: rgba(0, 0, 0, 0.5);
+            font-weight: bold;
+        }
+
+        .disk:active,
+        .disk.dragging {
+            cursor: grabbing;
+        }
+
+        .disk.dragging {
+            position: absolute;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0.9;
+            transform: scale(1.1);
+            transition: none;
+        }
+
+        /* Neon Colors mapped by size (1 to 7) */
+        .disk-1 {
+            width: 30%;
+            background: #f43f5e;
+            box-shadow: 0 0 15px #f43f5e;
+        }
+
+        .disk-2 {
+            width: 45%;
+            background: #f97316;
+            box-shadow: 0 0 15px #f97316;
+        }
+
+        .disk-3 {
+            width: 60%;
+            background: #eab308;
+            box-shadow: 0 0 15px #eab308;
+        }
+
+        .disk-4 {
+            width: 75%;
+            background: #2ecc71;
+            box-shadow: 0 0 15px #2ecc71;
+        }
+
+        .disk-5 {
+            width: 90%;
+            background: #06b6d4;
+            box-shadow: 0 0 15px #06b6d4;
+        }
+
+        .disk-6 {
+            width: 95%;
+            background: #8b5cf6;
+            box-shadow: 0 0 15px #8b5cf6;
+        }
+
+        .disk-7 {
+            width: 100%;
+            background: #ec4899;
+            box-shadow: 0 0 15px #ec4899;
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+
+        .modal-box p,
+        .modal-box li {
+            color: #94a3b8;
+            margin-bottom: 10px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+            text-align: left;
+        }
+
+        .modal-box ul {
+            margin-left: 20px;
+            margin-bottom: 25px;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .drag-anim {
+            font-size: 2.5rem;
+            color: #2ecc71;
+            margin: 15px 0;
+            animation: moveAnim 2s infinite ease-in-out;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        @keyframes moveAnim {
+            0% {
+                transform: translate(-30px, 0);
+            }
+
+            50% {
+                transform: translate(30px, -20px);
+            }
+
+            100% {
+                transform: translate(-30px, 0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+
+        <div class="action-btns">
+            <div class="level-select">
+                <button id="lvlDown"><i class="fa-solid fa-minus"></i></button>
+                <span id="diskCountDisplay">5 Disks</span>
+                <button id="lvlUp"><i class="fa-solid fa-plus"></i></button>
+            </div>
+
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="restartBtn" title="Restart"><i class="fa-solid fa-rotate-right"></i></button>
+            <button class="icon-btn" id="helpBtn" title="Rules"><i class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Moves</div>
+                <div class="score-val" id="moveDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Optimal Moves</div>
+                <div class="score-val" id="optimalDisplay">31</div>
+            </div>
+        </div>
+
+        <div class="board" id="board">
+            <div class="peg-container" id="peg-0" data-peg="0"></div>
+            <div class="peg-container" id="peg-1" data-peg="1"></div>
+            <div class="peg-container" id="peg-2" data-peg="2"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="guideModal">
+        <div class="modal-box">
+            <h2>Neon Tower</h2>
+            <div class="drag-anim">
+                <i class="fa-solid fa-hand-holding"></i>
+                <i class="fa-solid fa-arrow-right"></i>
+            </div>
+            <p style="text-align: center;">Move the entire stack to the rightmost peg.</p>
+            <ul>
+                <li>Drag and drop to move a disk.</li>
+                <li>You can only move one disk at a time.</li>
+                <li>A larger disk <strong>cannot</strong> be placed on top of a smaller disk.</li>
+            </ul>
+            <button class="play-btn" id="startGameBtn">Start Puzzle</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="victoryModal">
+        <div class="modal-box">
+            <h2 style="color: #2ecc71; text-shadow: 0 0 15px rgba(46, 204, 113, 0.6);">Puzzle Solved!</h2>
+            <p style="font-size: 1.2rem; text-align: center;">Moves taken: <strong id="finalMoves"
+                    style="color: white;"></strong></p>
+            <p style="font-size: 1.2rem; text-align: center;">Minimum possible: <strong id="minMoves"
+                    style="color: var(--accent);"></strong></p>
+
+            <div id="perfectBadge"
+                style="display: none; color: #facc15; font-size: 1.5rem; margin: 15px 0; font-weight: bold; text-shadow: 0 0 10px #facc15;">
+                <i class="fa-solid fa-star"></i> Perfect Score! <i class="fa-solid fa-star"></i>
+            </div>
+
+            <button class="play-btn" id="playAgainBtn" style="background: #2ecc71; margin-top: 15px;">Play Next
+                Level</button>
+        </div>
+    </div>
+
+    <script>
+        // --- State Variables ---
+        let numDisks = 5; // Default changed to 5!
+        let moves = 0;
+        let optimalMoves = 31;
+        let pegs = [[], [], []];
+
+        const moveDisplay = document.getElementById("moveDisplay");
+        const optimalDisplay = document.getElementById("optimalDisplay");
+        const diskCountDisplay = document.getElementById("diskCountDisplay");
+        const board = document.getElementById("board");
+
+        // Modal elements
+        const guideModal = document.getElementById("guideModal");
+        const victoryModal = document.getElementById("victoryModal");
+
+        // Drag state
+        let draggedDiskSize = null;
+        let draggedDiskEl = null;
+        let sourcePegIndex = null;
+        let currentDropPeg = null;
+
+        // --- Initialization ---
+        function initGame() {
+            moves = 0;
+            optimalMoves = Math.pow(2, numDisks) - 1;
+
+            moveDisplay.textContent = moves;
+            optimalDisplay.textContent = optimalMoves;
+            diskCountDisplay.textContent = `${numDisks} Disks`;
+
+            // Reset Logical Arrays
+            pegs = [[], [], []];
+            for (let i = numDisks; i >= 1; i--) {
+                pegs[0].push(i);
+            }
+
+            renderBoard();
+            victoryModal.classList.add("hidden");
+        }
+
+        function renderBoard() {
+            for (let i = 0; i < 3; i++) {
+                document.getElementById(`peg-${i}`).innerHTML = "";
+            }
+
+            for (let i = 0; i < 3; i++) {
+                const pegContainer = document.getElementById(`peg-${i}`);
+
+                pegs[i].forEach((diskSize, index) => {
+                    const disk = document.createElement("div");
+                    disk.classList.add("disk", `disk-${diskSize}`);
+                    disk.dataset.size = diskSize;
+
+                    // Only the top disk of a peg is draggable
+                    if (index === pegs[i].length - 1) {
+                        disk.style.cursor = "grab";
+                        attachDragEvents(disk, i);
+                    } else {
+                        disk.style.cursor = "not-allowed";
+                    }
+
+                    pegContainer.appendChild(disk);
+                });
+            }
+        }
+
+        // --- Custom Drag and Drop Engine (Mouse & Touch) ---
+        function attachDragEvents(diskEl, pegIndex) {
+            diskEl.addEventListener("touchstart", (e) => handleDragStart(e, diskEl, pegIndex), { passive: false });
+            diskEl.addEventListener("mousedown", (e) => handleDragStart(e, diskEl, pegIndex));
+        }
+
+        function handleDragStart(e, diskEl, pegIndex) {
+            e.preventDefault();
+
+            draggedDiskEl = diskEl;
+            draggedDiskSize = parseInt(diskEl.dataset.size);
+            sourcePegIndex = pegIndex;
+
+            const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+
+            draggedDiskEl.classList.add("dragging");
+            document.body.appendChild(draggedDiskEl);
+            moveFloatingDisk(clientX, clientY);
+
+            document.addEventListener('mousemove', handleDragMove);
+            document.addEventListener('touchmove', handleDragMove, { passive: false });
+            document.addEventListener('mouseup', handleDragEnd);
+            document.addEventListener('touchend', handleDragEnd);
+        }
+
+        function handleDragMove(e) {
+            e.preventDefault();
+            const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+
+            moveFloatingDisk(clientX, clientY);
+
+            let hoveredPeg = null;
+            document.querySelectorAll('.peg-container').forEach(pegEl => {
+                pegEl.classList.remove('drag-over');
+                const rect = pegEl.getBoundingClientRect();
+                if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom) {
+                    hoveredPeg = pegEl;
+                }
+            });
+
+            currentDropPeg = hoveredPeg;
+
+            if (currentDropPeg) {
+                const targetPegIndex = parseInt(currentDropPeg.dataset.peg);
+                if (isValidMove(draggedDiskSize, targetPegIndex)) {
+                    currentDropPeg.classList.add('drag-over');
+                }
+            }
+        }
+
+        function handleDragEnd(e) {
+            // Remove global listeners
+            document.removeEventListener('mousemove', handleDragMove);
+            document.removeEventListener('touchmove', handleDragMove);
+            document.removeEventListener('mouseup', handleDragEnd);
+            document.removeEventListener('touchend', handleDragEnd);
+
+            // FIX: Completely erase the "ghost" dragged element from the DOM
+            if (draggedDiskEl && draggedDiskEl.parentNode) {
+                draggedDiskEl.parentNode.removeChild(draggedDiskEl);
+            }
+
+            document.querySelectorAll('.peg-container').forEach(p => p.classList.remove('drag-over'));
+
+            if (currentDropPeg) {
+                const targetPegIndex = parseInt(currentDropPeg.dataset.peg);
+
+                if (isValidMove(draggedDiskSize, targetPegIndex) && sourcePegIndex !== targetPegIndex) {
+                    pegs[sourcePegIndex].pop();
+                    pegs[targetPegIndex].push(draggedDiskSize);
+                    moves++;
+                    moveDisplay.textContent = moves;
+                }
+            }
+
+            // Snap the visual board back into place flawlessly
+            renderBoard();
+
+            // Reset drag vars
+            draggedDiskEl = null;
+            draggedDiskSize = null;
+            sourcePegIndex = null;
+            currentDropPeg = null;
+
+            checkWin();
+        }
+
+        function moveFloatingDisk(x, y) {
+            if (!draggedDiskEl) return;
+            const width = draggedDiskEl.offsetWidth;
+            const height = draggedDiskEl.offsetHeight;
+            draggedDiskEl.style.left = `${x - width / 2}px`;
+            draggedDiskEl.style.top = `${y - height / 2}px`;
+        }
+
+        // --- Logic Validation ---
+        function isValidMove(diskSize, targetPegIndex) {
+            const targetPeg = pegs[targetPegIndex];
+            if (targetPeg.length === 0) return true;
+            const topDiskSize = targetPeg[targetPeg.length - 1];
+            return diskSize < topDiskSize;
+        }
+
+        function checkWin() {
+            if (pegs[2].length === numDisks) {
+                document.getElementById('finalMoves').textContent = moves;
+                document.getElementById('minMoves').textContent = optimalMoves;
+
+                if (moves === optimalMoves) {
+                    document.getElementById('perfectBadge').style.display = 'block';
+                } else {
+                    document.getElementById('perfectBadge').style.display = 'none';
+                }
+
+                setTimeout(() => victoryModal.classList.remove("hidden"), 300);
+            }
+        }
+
+        // --- UI Buttons ---
+        document.getElementById("startGameBtn").addEventListener("click", () => {
+            guideModal.classList.add("hidden");
+            initGame();
+        });
+
+        document.getElementById("restartBtn").addEventListener("click", initGame);
+
+        document.getElementById("playAgainBtn").addEventListener("click", () => {
+            if (numDisks < 7) numDisks++;
+            initGame();
+        });
+
+        document.getElementById("helpBtn").addEventListener("click", () => guideModal.classList.remove("hidden"));
+
+        document.getElementById("lvlUp").addEventListener("click", () => {
+            if (numDisks < 7) { numDisks++; initGame(); }
+        });
+        document.getElementById("lvlDown").addEventListener("click", () => {
+            if (numDisks > 3) { numDisks--; initGame(); }
+        });
+
+        // --- Fullscreen API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        initGame();
+    </script>
+</body>
+
+</html>

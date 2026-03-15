@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon 2048 | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --board-bg: rgba(30, 41, 59, 0.8);
+            --cell-bg: rgba(255, 255, 255, 0.05);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --select-color: #00ffcc;
+            /* New color for selection */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* overflow: hidden; */
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+        }
+
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            min-width: 120px;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .board {
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1 / 1;
+            background: var(--board-bg);
+            border-radius: 16px;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            touch-action: none;
+        }
+
+        .cell {
+            background: var(--cell-bg);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(1.5rem, 6vw, 2.5rem);
+            font-weight: 900;
+            color: transparent;
+            transition: all 0.15s ease-in-out;
+            cursor: pointer;
+        }
+
+        /* Highlight for selected cell */
+        .cell.selected {
+            border: 3px solid var(--select-color);
+            box-shadow: 0 0 15px var(--select-color);
+            transform: scale(1.05);
+            z-index: 2;
+        }
+
+        /* Tile Colors based on numbers */
+        .tile-2 {
+            background: #1e293b;
+            color: #cbd5e1;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+        }
+
+        .tile-4 {
+            background: #334155;
+            color: #f8fafc;
+        }
+
+        .tile-8 {
+            background: #3b82f6;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .tile-16 {
+            background: #8b5cf6;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        }
+
+        .tile-32 {
+            background: #d946ef;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(217, 70, 239, 0.4);
+        }
+
+        .tile-64 {
+            background: #f43f5e;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+        }
+
+        .tile-128 {
+            background: #eab308;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.6);
+            font-size: clamp(1.2rem, 5vw, 2rem);
+        }
+
+        .tile-256 {
+            background: #facc15;
+            color: #fff;
+            box-shadow: 0 0 25px rgba(250, 204, 21, 0.7);
+            font-size: clamp(1.2rem, 5vw, 2rem);
+        }
+
+        .tile-512,
+        .tile-1024,
+        .tile-2048 {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 0 30px #fff;
+            font-size: clamp(1rem, 4vw, 1.5rem);
+        }
+
+        .pop-animation {
+            animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0.8);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .swipe-animation {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin: 15px 0;
+            animation: swipeHand 1.5s infinite;
+        }
+
+        @keyframes swipeHand {
+            0% {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(20px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Toggle Fullscreen">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+            <button class="icon-btn" id="restartBtn" title="Restart Game">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+            <button class="icon-btn" id="helpBtn" title="How to Play">
+                <i class="fa-solid fa-circle-question"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="game-container" id="gameArea">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Score</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Best</div>
+                <div class="score-val" id="highScoreDisplay">0</div>
+            </div>
+        </div>
+
+        <div class="board" id="board">
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="guideModal">
+        <div class="modal-box">
+            <h2>Strategic 2048</h2>
+            <div class="swipe-animation"><i class="fa-regular fa-hand-pointer"></i></div>
+            <p><strong>Click</strong> a tile or press <strong>Spacebar</strong> to select one. It will glow neon green.
+            </p>
+            <p><strong>Swipe</strong> or use <strong>Arrow Keys</strong> to move that specific tile one step at a time.
+            </p>
+            <p>Merge identical tiles. New tiles spawn when you merge or every 3 moves.</p>
+            <button class="play-btn" id="startGameBtn">Let's Play</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="gameOverModal">
+        <div class="modal-box">
+            <h2 style="color: #ff4d4d;">Game Over!</h2>
+            <p>No more valid moves available.</p>
+            <p style="font-size: 1.5rem; color: white;">Score: <span id="finalScoreDisplay">0</span></p>
+            <button class="play-btn" id="tryAgainBtn">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Core Variables ---
+        const boardElement = document.getElementById('board');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
+        const guideModal = document.getElementById('guideModal');
+        const gameOverModal = document.getElementById('gameOverModal');
+        let grid = [];
+        let score = 0;
+        let highScore = localStorage.getItem('2048HighScore') || 0;
+        let selectedIndex = -1; // Tracks the currently selected tile
+        let moveCount = 0; // Tracks moves to balance spawning
+
+        highScoreDisplay.textContent = highScore;
+
+        // --- Initialize Grid UI ---
+        function initUI() {
+            boardElement.innerHTML = '';
+            for (let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.id = `cell-${i}`;
+
+                // Add click listener to select specific cell
+                cell.addEventListener('click', () => {
+                    if (grid[i] !== 0) {
+                        selectedIndex = i;
+                        updateBoardUI();
+                    }
+                });
+
+                boardElement.appendChild(cell);
+            }
+        }
+
+        // --- Game Logic ---
+        function startNewGame() {
+            grid = new Array(16).fill(0);
+            score = 0;
+            selectedIndex = -1;
+            moveCount = 0;
+            updateScore();
+            guideModal.classList.add('hidden');
+            gameOverModal.classList.add('hidden');
+            addRandomTile();
+            addRandomTile();
+
+            // Auto-select the first available tile at start
+            cycleSelection();
+            updateBoardUI();
+        }
+
+        function addRandomTile() {
+            const emptyCells = grid.map((val, index) => val === 0 ? index : null).filter(val => val !== null);
+            if (emptyCells.length === 0) return;
+            const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            grid[randomCell] = Math.random() > 0.1 ? 2 : 4;
+
+            // Trigger animation
+            setTimeout(() => {
+                const cellEl = document.getElementById(`cell-${randomCell}`);
+                if (cellEl) cellEl.classList.add('pop-animation');
+            }, 50);
+        }
+
+        function updateBoardUI() {
+            for (let i = 0; i < 16; i++) {
+                const cell = document.getElementById(`cell-${i}`);
+                cell.className = 'cell'; // Reset classes
+
+                // Add selected highlight
+                if (i === selectedIndex) {
+                    cell.classList.add('selected');
+                }
+
+                cell.textContent = grid[i] === 0 ? '' : grid[i];
+                if (grid[i] !== 0) {
+                    cell.classList.add(`tile-${grid[i]}`);
+                }
+            }
+            checkGameOver();
+        }
+
+        function updateScore() {
+            scoreDisplay.textContent = score;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('2048HighScore', highScore);
+                highScoreDisplay.textContent = highScore;
+            }
+        }
+
+        // --- Cycle Selection via Keyboard ---
+        function cycleSelection() {
+            // Find all grid spots that actually have a tile
+            const populatedIndices = grid.map((val, index) => val !== 0 ? index : -1).filter(index => index !== -1);
+
+            if (populatedIndices.length === 0) return;
+
+            if (selectedIndex === -1 || !populatedIndices.includes(selectedIndex)) {
+                // If nothing is selected, or the selected tile vanished (merged), pick the first one
+                selectedIndex = populatedIndices[0];
+            } else {
+                // Move to the next active tile, wrapping back to the start if at the end
+                let currentIndexPosition = populatedIndices.indexOf(selectedIndex);
+                let nextIndexPosition = (currentIndexPosition + 1) % populatedIndices.length;
+                selectedIndex = populatedIndices[nextIndexPosition];
+            }
+            updateBoardUI();
+        }
+
+        // --- Strategic Single-Tile Movement Logic ---
+        function move(direction) {
+            if (selectedIndex === -1) return; // Ignore if no tile is selected
+
+            let targetIndex = -1;
+            let row = Math.floor(selectedIndex / 4);
+            let col = selectedIndex % 4;
+
+            // Calculate target position based on direction
+            if (direction === 'Up' && row > 0) targetIndex = selectedIndex - 4;
+            if (direction === 'Down' && row < 3) targetIndex = selectedIndex + 4;
+            if (direction === 'Left' && col > 0) targetIndex = selectedIndex - 1;
+            if (direction === 'Right' && col < 3) targetIndex = selectedIndex + 1;
+
+            if (targetIndex !== -1) {
+                let currentVal = grid[selectedIndex];
+                let targetVal = grid[targetIndex];
+
+                if (targetVal === 0) {
+                    // Move into empty space
+                    grid[targetIndex] = currentVal;
+                    grid[selectedIndex] = 0;
+                    selectedIndex = targetIndex;
+                    finalizeMove(false);
+                } else if (targetVal === currentVal) {
+                    // Merge with identical tile
+                    grid[targetIndex] = currentVal * 2;
+                    score += grid[targetIndex];
+                    grid[selectedIndex] = 0;
+                    selectedIndex = targetIndex; // Keep the merged tile selected
+                    finalizeMove(true);
+                }
+                // If the target tile is a different number, movement is blocked (do nothing)
+            }
+        }
+
+        function finalizeMove(merged) {
+            updateScore();
+            moveCount++;
+
+            // Balance: Spawn a new tile if a merge happened, OR every 3 regular moves
+            if (merged || moveCount >= 3) {
+                addRandomTile();
+                moveCount = 0; // Reset counter
+            }
+
+            updateBoardUI();
+        }
+
+        function checkGameOver() {
+            if (grid.includes(0)) return; // Space exists
+            // Check for adjacent matches
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    let idx = r * 4 + c;
+                    let current = grid[idx];
+                    if (c < 3 && current === grid[idx + 1]) return; // match right
+                    if (r < 3 && current === grid[idx + 4]) return; // match down
+                }
+            }
+            // If we reach here, game over
+            document.getElementById('finalScoreDisplay').textContent = score;
+            gameOverModal.classList.remove('hidden');
+        }
+
+        // --- FULLSCREEN API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) { gameArea.requestFullscreen(); }
+                else if (gameArea.webkitRequestFullscreen) { gameArea.webkitRequestFullscreen(); } // Safari
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) { document.exitFullscreen(); }
+                else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // --- SWIPE CONTROLS (Mobile) ---
+        let touchStartX = 0;
+        let touchStartY = 0;
+        const threshold = 30; // Minimum swipe distance
+
+        boardElement.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: false });
+
+        boardElement.addEventListener('touchmove', e => {
+            e.preventDefault();
+        }, { passive: false });
+
+        boardElement.addEventListener('touchend', e => {
+            let touchEndX = e.changedTouches[0].screenX;
+            let touchEndY = e.changedTouches[0].screenY;
+            handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY);
+        });
+
+        function handleSwipe(startX, startY, endX, endY) {
+            let diffX = endX - startX;
+            let diffY = endY - startY;
+
+            if (Math.abs(diffX) < threshold && Math.abs(diffY) < threshold) return; // Ignore slight taps
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0) move('Right');
+                else move('Left');
+            } else {
+                if (diffY > 0) move('Down');
+                else move('Up');
+            }
+        }
+
+        // --- Keyboard Controls (PC) ---
+        document.addEventListener('keydown', e => {
+            if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
+                e.preventDefault();
+                move(e.code.replace('Arrow', ''));
+            } else if (e.code === 'Space') {
+                e.preventDefault(); // Prevents spacebar from scrolling the page
+                cycleSelection();
+            }
+        });
+
+        // --- Button Bindings ---
+        document.getElementById('startGameBtn').addEventListener('click', startNewGame);
+        document.getElementById('tryAgainBtn').addEventListener('click', startNewGame);
+        document.getElementById('restartBtn').addEventListener('click', startNewGame);
+        document.getElementById('helpBtn').addEventListener('click', () => guideModal.classList.remove('hidden'));
+
+        // Boot
+        initUI();
+    </script>
+</body>
+
+</html>

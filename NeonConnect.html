@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Connect | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --p1-color: #f43f5e;
+            /* Neon Pink */
+            --p2-color: #06b6d4;
+            /* Neon Cyan */
+            --board-blue: #1e3a8a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* overflow: hidden; */
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 600px;
+            padding: 10px;
+        }
+
+        /* --- Status Bar --- */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 25px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .player-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .player-badge.active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .player-badge.p1.active {
+            color: var(--p1-color);
+            text-shadow: 0 0 10px var(--p1-color);
+        }
+
+        .player-badge.p2.active {
+            color: var(--p2-color);
+            text-shadow: 0 0 10px var(--p2-color);
+        }
+
+        .dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .p1 .dot {
+            background: var(--p1-color);
+            box-shadow: 0 0 10px var(--p1-color);
+        }
+
+        .p2 .dot {
+            background: var(--p2-color);
+            box-shadow: 0 0 10px var(--p2-color);
+        }
+
+        /* --- Game Board --- */
+        .board {
+            width: auto;
+            display: flex;
+            background: var(--board-blue);
+            padding: 10px;
+            border-radius: 16px;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5), 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(59, 130, 246, 0.5);
+            touch-action: manipulation;
+            /* Optimizes for fast tapping */
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column-reverse;
+            /* Bottom up logic */
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .column:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .cell {
+            width: clamp(35px, 10vw, 60px);
+            height: clamp(35px, 10vw, 60px);
+            margin: 5px;
+            background: var(--bg-color);
+            /* Matches background to look like a hole */
+            border-radius: 50%;
+            box-shadow: inset 0 5px 10px rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- Tokens --- */
+        .token {
+            width: 90%;
+            height: 90%;
+            border-radius: 50%;
+            position: absolute;
+            transform: translateY(-500px);
+            /* Start high up for drop animation */
+        }
+
+        .token.p1 {
+            background: radial-gradient(circle at 30% 30%, #fb7185, var(--p1-color));
+            box-shadow: 0 0 15px var(--p1-color);
+        }
+
+        .token.p2 {
+            background: radial-gradient(circle at 30% 30%, #22d3ee, var(--p2-color));
+            box-shadow: 0 0 15px var(--p2-color);
+        }
+
+        .drop-anim {
+            animation: dropGravity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes dropGravity {
+            0% {
+                transform: translateY(-400px);
+            }
+
+            60% {
+                transform: translateY(10px);
+            }
+
+            80% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        .token.winner {
+            animation: pulseWin 1s infinite alternate;
+            border: 3px solid white;
+        }
+
+        @keyframes pulseWin {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="restartBtn" title="Restart"><i class="fa-solid fa-rotate-right"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i
+                    class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container">
+
+        <div class="status-bar">
+            <div class="player-badge p1 active" id="badgeP1">
+                <div class="dot"></div> Player 1
+            </div>
+            <div class="player-badge p2" id="badgeP2">
+                Player 2 <div class="dot"></div>
+            </div>
+        </div>
+
+        <div class="board" id="board">
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="guideModal">
+        <div class="modal-box">
+            <h2>Neon Connect</h2>
+            <div
+                style="font-size: 3rem; margin: 15px 0; color: var(--p1-color); animation: pulseWin 1s infinite alternate;">
+                <i class="fa-solid fa-hand-pointer"></i>
+            </div>
+            <p>Tap a column to drop your neon token.</p>
+            <p>Connect <strong>4</strong> tokens horizontally, vertically, or diagonally to win!</p>
+            <button class="play-btn" id="startGameBtn">Start Game</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="gameOverModal">
+        <div class="modal-box">
+            <h2 id="winnerText">Player 1 Wins!</h2>
+            <p>Great strategy!</p>
+            <button class="play-btn" id="playAgainBtn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const ROWS = 6;
+        const COLS = 6;
+        const boardEl = document.getElementById("board");
+        const guideModal = document.getElementById("guideModal");
+        const gameOverModal = document.getElementById("gameOverModal");
+        const badgeP1 = document.getElementById("badgeP1");
+        const badgeP2 = document.getElementById("badgeP2");
+        const winnerText = document.getElementById("winnerText");
+
+        let grid = []; // 2D array [col][row]
+        let currentPlayer = 1; // 1 or 2
+        let gameActive = false;
+        let isAnimating = false;
+
+        // --- Initialization ---
+        function initBoard() {
+            boardEl.innerHTML = "";
+            grid = [];
+
+            for (let c = 0; c < COLS; c++) {
+                grid[c] = [];
+                const colEl = document.createElement("div");
+                colEl.classList.add("column");
+                colEl.dataset.col = c;
+
+                // Add click/touch listener to the entire column
+                colEl.addEventListener("click", () => handleDrop(c));
+
+                for (let r = 0; r < ROWS; r++) {
+                    grid[c][r] = 0; // 0 = empty, 1 = P1, 2 = P2
+                    const cellEl = document.createElement("div");
+                    cellEl.classList.add("cell");
+                    cellEl.id = `cell-${c}-${r}`;
+                    colEl.appendChild(cellEl);
+                }
+                boardEl.appendChild(colEl);
+            }
+        }
+
+        function startGame() {
+            initBoard();
+            currentPlayer = 1;
+            updateTurnIndicator();
+            gameActive = true;
+            isAnimating = false;
+            guideModal.classList.add("hidden");
+            gameOverModal.classList.add("hidden");
+        }
+
+        // --- Gameplay Logic ---
+        function handleDrop(colIndex) {
+            if (!gameActive || isAnimating) return;
+
+            // Find lowest empty row in this column
+            let targetRow = -1;
+            for (let r = 0; r < ROWS; r++) {
+                if (grid[colIndex][r] === 0) {
+                    targetRow = r;
+                    break;
+                }
+            }
+
+            // Column is full
+            if (targetRow === -1) return;
+
+            // Lock input during animation
+            isAnimating = true;
+
+            // Update Data
+            grid[colIndex][targetRow] = currentPlayer;
+
+            // Update UI
+            const cellEl = document.getElementById(`cell-${colIndex}-${targetRow}`);
+            const token = document.createElement("div");
+            token.classList.add("token", `p${currentPlayer}`, "drop-anim");
+            cellEl.appendChild(token);
+
+            // Wait for animation to finish before checking win
+            setTimeout(() => {
+                const winData = checkWin();
+                if (winData) {
+                    handleWin(winData);
+                } else if (checkDraw()) {
+                    handleDraw();
+                } else {
+                    // Switch turn
+                    currentPlayer = currentPlayer === 1 ? 2 : 1;
+                    updateTurnIndicator();
+                    isAnimating = false;
+                }
+            }, 500); // 500ms matches CSS animation duration
+        }
+
+        function updateTurnIndicator() {
+            if (currentPlayer === 1) {
+                badgeP1.classList.add("active");
+                badgeP2.classList.remove("active");
+            } else {
+                badgeP2.classList.add("active");
+                badgeP1.classList.remove("active");
+            }
+        }
+
+        // --- Win Detection ---
+        function checkWin() {
+            // Check horizontal, vertical, and diagonals
+            const directions = [
+                { x: 1, y: 0 }, // Horizontal
+                { x: 0, y: 1 }, // Vertical
+                { x: 1, y: 1 }, // Diagonal Right
+                { x: 1, y: -1 } // Diagonal Left
+            ];
+
+            for (let c = 0; c < COLS; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    const player = grid[c][r];
+                    if (player === 0) continue;
+
+                    for (let { x: dx, y: dy } of directions) {
+                        let winCells = [{ c, r }];
+                        for (let i = 1; i < 4; i++) {
+                            const nextC = c + dx * i;
+                            const nextR = r + dy * i;
+
+                            // Check bounds
+                            if (nextC < 0 || nextC >= COLS || nextR < 0 || nextR >= ROWS) break;
+
+                            // Check match
+                            if (grid[nextC][nextR] === player) {
+                                winCells.push({ c: nextC, r: nextR });
+                            } else {
+                                break;
+                            }
+                        }
+
+                        if (winCells.length === 4) return { player, winCells };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function checkDraw() {
+            for (let c = 0; c < COLS; c++) {
+                if (grid[c][ROWS - 1] === 0) return false; // Top row has empty space
+            }
+            return true;
+        }
+
+        function handleWin(winData) {
+            gameActive = false;
+
+            // Highlight winning tokens
+            winData.winCells.forEach(cell => {
+                const token = document.getElementById(`cell-${cell.c}-${cell.r}`).querySelector('.token');
+                if (token) token.classList.add("winner");
+            });
+
+            setTimeout(() => {
+                winnerText.textContent = `Player ${winData.player} Wins!`;
+                winnerText.style.color = winData.player === 1 ? 'var(--p1-color)' : 'var(--p2-color)';
+                winnerText.style.textShadow = `0 0 10px ${winnerText.style.color}`;
+                gameOverModal.classList.remove("hidden");
+            }, 1000);
+        }
+
+        function handleDraw() {
+            gameActive = false;
+            winnerText.textContent = "It's a Draw!";
+            winnerText.style.color = "white";
+            winnerText.style.textShadow = "none";
+            gameOverModal.classList.remove("hidden");
+        }
+
+        // --- Buttons & Modals ---
+        document.getElementById("startGameBtn").addEventListener("click", startGame);
+        document.getElementById("playAgainBtn").addEventListener("click", startGame);
+        document.getElementById("restartBtn").addEventListener("click", () => { if (!isAnimating) startGame(); });
+        document.getElementById("helpBtn").addEventListener("click", () => guideModal.classList.remove("hidden"));
+
+        // Fullscreen API
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Setup board on load
+        initBoard();
+
+    </script>
+</body>
+
+</html>

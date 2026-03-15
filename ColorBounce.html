@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Color Bounce | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            /* The 4 Core Colors */
+            --c-cyan: #06b6d4;
+            --c-pink: #f43f5e;
+            --c-yellow: #eab308;
+            --c-green: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* overflow: hidden; */
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* --- Canvas --- */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            max-height: 100%;
+            aspect-ratio: 9/16;
+            /* Portrait ratio for vertical jumper */
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: #0a0f1a;
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 85%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--c-yellow);
+            text-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .tap-animation {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin: 15px 0;
+            animation: tapHand 1s infinite alternate;
+        }
+
+        @keyframes tapHand {
+            0% {
+                transform: scale(1) translateY(0);
+            }
+
+            100% {
+                transform: scale(0.9) translateY(10px);
+                color: var(--c-cyan);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i
+                    class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Stars</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">High Score</div>
+                <div class="score-val" id="highScoreDisplay">0</div>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="450" height="800"></canvas>
+
+            <div class="modal-overlay" id="guideModal">
+                <div class="modal-box">
+                    <h2>Color Bounce</h2>
+                    <div class="tap-animation"><i class="fa-solid fa-hand-pointer"></i></div>
+                    <p><strong>Tap / click Space</strong> carefully to bounce the ball upwards.</p>
+                    <p>You must cross through the pattern matching your <strong>current color</strong>.</p>
+                    <button class="play-btn" id="startGameBtn">Start Bouncing</button>
+                </div>
+            </div>
+
+            <div class="modal-overlay hidden" id="gameOverModal">
+                <div class="modal-box">
+                    <h2 style="color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);">Wrong Color!</h2>
+                    <p style="font-size: 1.5rem; color: white;">Stars Collected: <span id="finalScoreDisplay">0</span>
+                    </p>
+                    <button class="play-btn" id="tryAgainBtn" style="background: #f43f5e;">Try Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const highScoreDisplay = document.getElementById("highScoreDisplay");
+        const guideModal = document.getElementById("guideModal");
+        const gameOverModal = document.getElementById("gameOverModal");
+
+        // The exact colors matching CSS variables
+        const colors = ['#06b6d4', '#f43f5e', '#eab308', '#2ecc71'];
+
+        // --- Game State ---
+        let gameActive = false;
+        let score = 0;
+        let highScore = localStorage.getItem("neonColorBounceHigh") || 0;
+        let cameraY = 0; // Moves the world down as ball goes up
+
+        highScoreDisplay.textContent = highScore;
+
+        // --- Objects ---
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height * 0.75,
+            radius: 12,
+            dy: 0,
+            gravity: 0.25,
+            jumpForce: -6,
+            color: colors[0],
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.closePath();
+                ctx.shadowBlur = 0;
+            },
+
+            update() {
+                this.dy += this.gravity;
+                this.y += this.dy;
+
+                // Smart Camera: If ball goes above center, push everything else down
+                if (this.y < canvas.height / 2) {
+                    let diff = (canvas.height / 2) - this.y;
+                    this.y = canvas.height / 2;
+                    cameraY += diff;
+                }
+
+                // Floor collision (death)
+                if (this.y > canvas.height + 50) {
+                    endGame();
+                }
+            },
+
+            jump() {
+                this.dy = this.jumpForce;
+            }
+        };
+
+        let entities = []; // Holds rings, stars, and color switchers
+
+        class RingObstacle {
+            constructor(y) {
+                this.y = y;
+                this.radius = 80;
+                this.thickness = 15;
+                this.angle = 0;
+                this.rotationSpeed = (Math.random() > 0.5 ? 1 : -1) * (0.02 + Math.random() * 0.02);
+                this.type = 'ring';
+                this.passed = false;
+            }
+
+            draw(camY) {
+                let drawY = this.y + camY;
+                ctx.lineWidth = this.thickness;
+
+                for (let i = 0; i < 4; i++) {
+                    ctx.beginPath();
+                    // Draw 4 segments of the circle
+                    let startAngle = this.angle + (i * Math.PI / 2);
+                    let endAngle = this.angle + ((i + 1) * Math.PI / 2);
+
+                    ctx.arc(canvas.width / 2, drawY, this.radius, startAngle, endAngle);
+                    ctx.strokeStyle = colors[i];
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = colors[i];
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            update() {
+                this.angle += this.rotationSpeed;
+            }
+        }
+
+        class Star {
+            constructor(y) {
+                this.y = y;
+                this.radius = 15;
+                this.type = 'star';
+                this.collected = false;
+                this.pulse = 0;
+            }
+
+            draw(camY) {
+                if (this.collected) return;
+                let drawY = this.y + camY;
+
+                this.pulse += 0.1;
+                let scale = 1 + Math.sin(this.pulse) * 0.1;
+
+                ctx.save();
+                ctx.translate(canvas.width / 2, drawY);
+                ctx.scale(scale, scale);
+
+                // Draw a simple 4-point star
+                ctx.beginPath();
+                ctx.moveTo(0, -this.radius);
+                ctx.lineTo(this.radius / 3, -this.radius / 3);
+                ctx.lineTo(this.radius, 0);
+                ctx.lineTo(this.radius / 3, this.radius / 3);
+                ctx.lineTo(0, this.radius);
+                ctx.lineTo(-this.radius / 3, this.radius / 3);
+                ctx.lineTo(-this.radius, 0);
+                ctx.lineTo(-this.radius / 3, -this.radius / 3);
+                ctx.closePath();
+
+                ctx.fillStyle = "white";
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "white";
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        class ColorSwitcher {
+            constructor(y) {
+                this.y = y;
+                this.radius = 15;
+                this.type = 'switcher';
+                this.collected = false;
+            }
+
+            draw(camY) {
+                if (this.collected) return;
+                let drawY = this.y + camY;
+
+                // Draw a circle broken into 4 colored slices
+                for (let i = 0; i < 4; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(canvas.width / 2, drawY);
+                    ctx.arc(canvas.width / 2, drawY, this.radius, i * Math.PI / 2, (i + 1) * Math.PI / 2);
+                    ctx.fillStyle = colors[i];
+                    ctx.fill();
+                }
+            }
+        }
+
+        function generateLevel(startY) {
+            let yPos = startY;
+            // Generate a chunk of 5 rings
+            for (let i = 0; i < 5; i++) {
+                entities.push(new RingObstacle(yPos));
+                entities.push(new Star(yPos)); // Star inside the ring
+                entities.push(new ColorSwitcher(yPos - 200)); // Switcher between rings
+                yPos -= 400; // Spacing between rings
+            }
+        }
+
+        // --- Core Loops ---
+        function checkCollisions() {
+            let ballVisualY = ball.y - cameraY; // The ball's true Y relative to the entities
+
+            for (let i = 0; i < entities.length; i++) {
+                let ent = entities[i];
+
+                if (ent.type === 'ring') {
+                    // Check if ball is passing through the ring's stroke
+                    let distY = Math.abs(ballVisualY - ent.y);
+
+                    // If ball is within the top or bottom stroke of the ring
+                    if (distY < ent.radius + ent.thickness / 2 + ball.radius &&
+                        distY > ent.radius - ent.thickness / 2 - ball.radius) {
+
+                        // Check which color it is hitting
+                        let isTopHit = ballVisualY < ent.y;
+
+                        // 1.5 PI is top (270deg), 0.5 PI is bottom (90deg)
+                        let checkAngle = isTopHit ? (1.5 * Math.PI) : (0.5 * Math.PI);
+
+                        // Normalize the ring's current rotation
+                        let normalizedRot = ent.angle % (2 * Math.PI);
+                        if (normalizedRot < 0) normalizedRot += 2 * Math.PI;
+
+                        // Calculate relative angle to see which segment the ball hit
+                        let relativeAngle = (checkAngle - normalizedRot + 2 * Math.PI) % (2 * Math.PI);
+                        let colorIndex = Math.floor(relativeAngle / (Math.PI / 2));
+
+                        if (colors[colorIndex] !== ball.color) {
+                            endGame();
+                        }
+                    }
+                }
+                else if (ent.type === 'star' && !ent.collected) {
+                    let dist = Math.abs(ballVisualY - ent.y);
+                    if (dist < ent.radius + ball.radius) {
+                        ent.collected = true;
+                        score++;
+                        scoreDisplay.textContent = score;
+                    }
+                }
+                else if (ent.type === 'switcher' && !ent.collected) {
+                    let dist = Math.abs(ballVisualY - ent.y);
+                    if (dist < ent.radius + ball.radius) {
+                        ent.collected = true;
+                        // Change ball to a random color that isn't its current one
+                        let newColors = colors.filter(c => c !== ball.color);
+                        ball.color = newColors[Math.floor(Math.random() * newColors.length)];
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            if (!gameActive) return;
+
+            // Background
+            ctx.fillStyle = "#0a0f1a";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ball.update();
+            ball.draw();
+
+            for (let i = 0; i < entities.length; i++) {
+                if (entities[i].update) entities[i].update();
+                entities[i].draw(cameraY);
+            }
+
+            checkCollisions();
+
+            // Level Generation Loop (infinite scroll)
+            let highestEntityY = entities[entities.length - 1].y + cameraY;
+            if (highestEntityY > -canvas.height) {
+                // Generate more level if we are close to the top
+                generateLevel(entities[entities.length - 1].y - 400);
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- State Management ---
+        function startGame() {
+            ball.y = canvas.height * 0.75;
+            ball.dy = 0;
+            ball.color = colors[Math.floor(Math.random() * colors.length)];
+            cameraY = 0;
+            score = 0;
+            scoreDisplay.textContent = 0;
+
+            entities = [];
+            generateLevel(canvas.height / 2 - 100);
+
+            gameActive = true;
+            guideModal.classList.add("hidden");
+            gameOverModal.classList.add("hidden");
+
+            ball.jump(); // Initial bounce
+            loop();
+        }
+
+        function endGame() {
+            gameActive = false;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem("neonColorBounceHigh", highScore);
+                highScoreDisplay.textContent = highScore;
+            }
+            document.getElementById("finalScoreDisplay").textContent = score;
+            gameOverModal.classList.remove("hidden");
+        }
+
+        // --- Controls (Touch & Keyboard) ---
+        function handleInput(e) {
+            if (!gameActive) return;
+            e.preventDefault(); // Prevents zoom/scroll on mobile
+            ball.jump();
+        }
+
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+        canvasWrapper.addEventListener('touchstart', handleInput, { passive: false });
+        canvasWrapper.addEventListener('mousedown', handleInput);
+
+        document.addEventListener('keydown', e => {
+            if (e.code === "Space" || e.code === "ArrowUp") handleInput(e);
+        });
+
+        // --- UI Buttons ---
+        document.getElementById("startGameBtn").addEventListener("click", startGame);
+        document.getElementById("tryAgainBtn").addEventListener("click", startGame);
+        document.getElementById("helpBtn").addEventListener("click", () => {
+            gameActive = false;
+            guideModal.classList.remove("hidden");
+        });
+
+        // --- Fullscreen API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Initial setup frame
+        ctx.fillStyle = "#0a0f1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ball.draw();
+
+    </script>
+</body>
+
+</html>

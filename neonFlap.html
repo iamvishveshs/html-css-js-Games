@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Flap | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --bird-color: #facc15;
+            --pipe-color: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* overflow: hidden; */
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 15px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            min-width: 120px;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* --- Canvas --- */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 3 / 4;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            touch-action: none;
+            /* Prevents mobile scrolling */
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: #0a0f1a;
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: absolute;
+            /* Absolute to the wrapper for better fullscreen feel */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 85%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--bird-color);
+            text-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .tap-animation {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin: 15px 0;
+            animation: tapHand 1s infinite alternate;
+        }
+
+        @keyframes tapHand {
+            0% {
+                transform: scale(1) translateY(0);
+            }
+
+            100% {
+                transform: scale(0.9) translateY(10px);
+                color: var(--bird-color);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i
+                    class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container" id="gameArea">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Score</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Best</div>
+                <div class="score-val" id="highScoreDisplay">0</div>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="400" height="533"></canvas>
+
+            <div class="modal-overlay" id="guideModal">
+                <div class="modal-box">
+                    <h2>Neon Flap</h2>
+                    <div class="tap-animation"><i class="fa-solid fa-hand-pointer"></i></div>
+                    <p><strong>Tap</strong> the screen or press <strong>Spacebar</strong> to fly up.</p>
+                    <p>Navigate the glowing cube through the neon gaps to score points!</p>
+                    <button class="play-btn" id="startGameBtn">Start Flying</button>
+                </div>
+            </div>
+
+            <div class="modal-overlay hidden" id="gameOverModal">
+                <div class="modal-box">
+                    <h2 style="color: #ff4d4d; text-shadow: 0 0 10px rgba(255, 77, 77, 0.5);">Crashed!</h2>
+                    <p style="font-size: 1.5rem; color: white;">Score: <span id="finalScoreDisplay">0</span></p>
+                    <button class="play-btn" id="tryAgainBtn">Play Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const highScoreDisplay = document.getElementById("highScoreDisplay");
+        const guideModal = document.getElementById("guideModal");
+        const gameOverModal = document.getElementById("gameOverModal");
+
+        // --- Game State ---
+        let frames = 0;
+        let score = 0;
+        let highScore = localStorage.getItem("neonFlapHigh") || 0;
+        let gameActive = false;
+        highScoreDisplay.textContent = highScore;
+
+        // --- Game Objects ---
+        const bird = {
+            x: 80, y: 200, width: 24, height: 24,
+            velocity: 0, gravity: 0.25, jump: -5.5,
+            draw() {
+                ctx.fillStyle = "#facc15";
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "#facc15";
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.shadowBlur = 0;
+            },
+            update() {
+                this.velocity += this.gravity;
+                this.y += this.velocity;
+                // Floor collision
+                if (this.y + this.height >= canvas.height) {
+                    this.y = canvas.height - this.height;
+                    endGame();
+                }
+                // Ceiling collision
+                if (this.y <= 0) {
+                    this.y = 0;
+                    this.velocity = 0;
+                }
+            },
+            flap() {
+                this.velocity = this.jump;
+            }
+        };
+
+        const pipes = {
+            items: [],
+            width: 50, gap: 130, dx: 3,
+            draw() {
+                ctx.fillStyle = "#2ecc71";
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = "#2ecc71";
+                for (let i = 0; i < this.items.length; i++) {
+                    let p = this.items[i];
+                    // Top pipe
+                    ctx.fillRect(p.x, 0, this.width, p.top);
+                    // Bottom pipe
+                    ctx.fillRect(p.x, canvas.height - p.bottom, this.width, p.bottom);
+                }
+                ctx.shadowBlur = 0;
+            },
+            update() {
+                if (frames % 90 === 0) {
+                    let minPipeHeight = 50;
+                    let maxPipeHeight = canvas.height - this.gap - minPipeHeight;
+                    let topHeight = Math.floor(Math.random() * (maxPipeHeight - minPipeHeight + 1)) + minPipeHeight;
+                    let bottomHeight = canvas.height - this.gap - topHeight;
+
+                    this.items.push({
+                        x: canvas.width,
+                        top: topHeight,
+                        bottom: bottomHeight,
+                        passed: false
+                    });
+                }
+                for (let i = 0; i < this.items.length; i++) {
+                    let p = this.items[i];
+                    p.x -= this.dx;
+
+                    // Collision Detection
+                    if (bird.x + bird.width > p.x && bird.x < p.x + this.width &&
+                        (bird.y < p.top || bird.y + bird.height > canvas.height - p.bottom)) {
+                        endGame();
+                    }
+
+                    // Score Update
+                    if (p.x + this.width < bird.x && !p.passed) {
+                        score++;
+                        scoreDisplay.textContent = score;
+                        p.passed = true;
+                    }
+
+                    // Remove off-screen pipes
+                    if (p.x + this.width < 0) {
+                        this.items.shift();
+                        i--;
+                    }
+                }
+            },
+            reset() { this.items = []; }
+        };
+
+        function drawBackground() {
+            ctx.fillStyle = "#0a0f1a";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Optional: Draw a subtle grid for the neon vibe
+            ctx.strokeStyle = "rgba(255,255,255,0.03)";
+            ctx.lineWidth = 1;
+            for (let i = 0; i < canvas.height; i += 40) {
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
+            }
+        }
+
+        // --- Core Loops ---
+        function loop() {
+            if (!gameActive) return;
+            drawBackground();
+            bird.draw();
+            bird.update();
+            pipes.draw();
+            pipes.update();
+            frames++;
+            requestAnimationFrame(loop);
+        }
+
+        function startGame() {
+            bird.y = 200;
+            bird.velocity = 0;
+            pipes.reset();
+            score = 0;
+            frames = 0;
+            scoreDisplay.textContent = score;
+            gameActive = true;
+            guideModal.classList.add("hidden");
+            gameOverModal.classList.add("hidden");
+            loop();
+        }
+
+        function endGame() {
+            gameActive = false;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem("neonFlapHigh", highScore);
+                highScoreDisplay.textContent = highScore;
+            }
+            document.getElementById("finalScoreDisplay").textContent = score;
+            gameOverModal.classList.remove("hidden");
+        }
+
+        // --- Controls (Touch & Keyboard) ---
+        function handleInput(e) {
+            if (!gameActive) return;
+            e.preventDefault(); // Stop mobile double-tap zoom
+            bird.flap();
+        }
+
+        // Listen on the canvas wrapper to prevent full page touches from firing it
+        document.querySelector('.canvas-wrapper').addEventListener("touchstart", handleInput, { passive: false });
+        document.querySelector('.canvas-wrapper').addEventListener("mousedown", handleInput);
+
+        document.addEventListener("keydown", (e) => {
+            if (e.code === "Space") {
+                handleInput(e);
+            }
+        });
+
+        // --- Buttons ---
+        document.getElementById("startGameBtn").addEventListener("click", startGame);
+        document.getElementById("tryAgainBtn").addEventListener("click", startGame);
+        document.getElementById("helpBtn").addEventListener("click", () => {
+            gameActive = false; // Pause
+            guideModal.classList.remove("hidden");
+        });
+
+        // --- Fullscreen API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) { gameArea.requestFullscreen(); }
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) { document.exitFullscreen(); }
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Initial render so the canvas isn't blank
+        drawBackground();
+        bird.draw();
+    </script>
+</body>
+
+</html>

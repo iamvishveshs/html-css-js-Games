@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Runner | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --runner-color: #06b6d4;
+            /* Neon Cyan */
+            --obstacle-color: #f43f5e;
+            /* Neon Pink */
+            --ground-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* overflow: hidden; */
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            min-width: 120px;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* --- Canvas --- */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 16 / 9;
+            /* Wide aspect ratio for runner games */
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: #0a0f1a;
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #guideModal {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: auto;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 85%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--runner-color);
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .swipe-animation {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .swipe-up {
+            animation: swipeUpAnim 1.5s infinite;
+            color: var(--runner-color);
+        }
+
+        .swipe-down {
+            animation: swipeDownAnim 1.5s infinite;
+            color: var(--obstacle-color);
+        }
+
+        @keyframes swipeUpAnim {
+            0% {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes swipeDownAnim {
+            0% {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i
+                    class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Distance</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">High Score</div>
+                <div class="score-val" id="highScoreDisplay">0</div>
+            </div>
+        </div>
+        <div class="modal-overlay" id="guideModal">
+            <div class="modal-box">
+                <h2>Neon Runner</h2>
+                <div class="swipe-animation">
+                    <div class="swipe-up"><i class="fa-solid fa-hand-pointer"></i><br><span
+                            style="font-size:0.8rem;">Jump</span></div>
+                    <div class="swipe-down"><i class="fa-solid fa-hand-pointer"></i><br><span
+                            style="font-size:0.8rem;">Duck</span></div>
+                </div>
+                <p><strong>Swipe Up</strong> to jump over ground spikes.</p>
+                <p><strong>Swipe Down</strong> to duck under high lasers.</p>
+                <button class="play-btn" id="startGameBtn">Start Running</button>
+            </div>
+        </div>
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="600" height="337"></canvas>
+
+
+
+            <div class="modal-overlay hidden" id="gameOverModal">
+                <div class="modal-box">
+                    <h2 style="color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);">Wasted!</h2>
+                    <p style="font-size: 1.5rem; color: white;">Distance: <span id="finalScoreDisplay">0</span></p>
+                    <button class="play-btn" id="tryAgainBtn" style="background: #f43f5e;">Run Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const highScoreDisplay = document.getElementById("highScoreDisplay");
+        const guideModal = document.getElementById("guideModal");
+        const gameOverModal = document.getElementById("gameOverModal");
+
+        // --- Game Variables ---
+        let gameActive = false;
+        let score = 0;
+        let highScore = localStorage.getItem("neonRunnerHigh") || 0;
+        let gameSpeed = 5;
+        let frame = 0;
+
+        highScoreDisplay.textContent = highScore;
+
+        const groundY = canvas.height - 40;
+
+        // --- Objects ---
+        const runner = {
+            x: 50,
+            y: groundY - 40,
+            width: 25,
+            height: 40,
+            dy: 0,
+            jumpForce: 11,
+            originalHeight: 60,
+            duckHeight: 30,
+            gravity: 0.6,
+            isJumping: false,
+            isDucking: false,
+            color: '#06b6d4',
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.shadowBlur = 0;
+            },
+
+            update() {
+                if (this.isDucking && !this.isJumping) {
+                    this.height = this.duckHeight;
+                    this.y = groundY - this.duckHeight;
+                } else {
+                    this.height = this.originalHeight;
+                }
+
+                this.dy += this.gravity;
+                this.y += this.dy;
+
+                // Hit Ground
+                if (this.y + this.height > groundY) {
+                    this.y = groundY - this.height;
+                    this.dy = 0;
+                    this.isJumping = false;
+                }
+            },
+
+            jump() {
+                if (!this.isJumping) {
+                    this.isJumping = true;
+                    this.dy = -this.jumpForce;
+                }
+            },
+
+            duck(state) {
+                this.isDucking = state;
+            }
+        };
+
+        let obstacles = [];
+
+        class Obstacle {
+            constructor(type) {
+                this.x = canvas.width;
+                this.type = type; // 0 = ground spike, 1 = high laser
+                this.width = type === 0 ? 20 : 40;
+                this.height = type === 0 ? 30 : 10;
+                this.y = type === 0 ? groundY - this.height : groundY - 60;
+                this.color = '#f43f5e';
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.shadowBlur = 0;
+            }
+
+            update() {
+                this.x -= gameSpeed;
+            }
+        }
+
+        function spawnObstacle() {
+            // Spawn logic based on frames, gets slightly faster
+            let spawnRate = Math.max(60, 120 - Math.floor(score / 50));
+            if (frame % spawnRate === 0) {
+                let type = Math.random() > 0.6 ? 1 : 0; // 40% chance for high laser
+                obstacles.push(new Obstacle(type));
+            }
+        }
+
+        // --- Core Loops ---
+        function drawEnvironment() {
+            // Background
+            ctx.fillStyle = "#0a0f1a";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Neon Ground Line
+            ctx.strokeStyle = "#334155";
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = "#3b82f6";
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(canvas.width, groundY);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Moving ground particles for speed illusion
+            ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+            for (let i = 0; i < 5; i++) {
+                let px = (canvas.width - ((frame * gameSpeed + i * 150) % canvas.width));
+                ctx.fillRect(px, groundY + 10, 30, 2);
+            }
+        }
+
+        function checkCollisions() {
+            for (let i = 0; i < obstacles.length; i++) {
+                let obs = obstacles[i];
+                // AABB Collision
+                if (runner.x < obs.x + obs.width &&
+                    runner.x + runner.width > obs.x &&
+                    runner.y < obs.y + obs.height &&
+                    runner.y + runner.height > obs.y) {
+                    endGame();
+                }
+            }
+        }
+
+        function loop() {
+            if (!gameActive) return;
+
+            drawEnvironment();
+
+            runner.update();
+            runner.draw();
+
+            spawnObstacle();
+
+            for (let i = 0; i < obstacles.length; i++) {
+                obstacles[i].update();
+                obstacles[i].draw();
+
+                // Remove off-screen obstacles
+                if (obstacles[i].x + obstacles[i].width < 0) {
+                    obstacles.shift();
+                    i--;
+                }
+            }
+
+            checkCollisions();
+
+            // Increase score and speed
+            score++;
+            if (score % 5 === 0) scoreDisplay.textContent = Math.floor(score / 5);
+            if (score % 500 === 0) gameSpeed += 0.5; // Gradually increase difficulty
+
+            frame++;
+            requestAnimationFrame(loop);
+        }
+
+        // --- State Management ---
+        function startGame() {
+            runner.y = groundY - runner.height;
+            runner.dy = 0;
+            obstacles = [];
+            score = 0;
+            frame = 0;
+            gameSpeed = 5;
+            scoreDisplay.textContent = 0;
+            gameActive = true;
+
+            guideModal.classList.add("hidden");
+            gameOverModal.classList.add("hidden");
+            loop();
+        }
+
+        function endGame() {
+            gameActive = false;
+            let finalDistance = Math.floor(score / 5);
+            if (finalDistance > highScore) {
+                highScore = finalDistance;
+                localStorage.setItem("neonRunnerHigh", highScore);
+                highScoreDisplay.textContent = highScore;
+            }
+            document.getElementById("finalScoreDisplay").textContent = finalDistance;
+            gameOverModal.classList.remove("hidden");
+        }
+
+        // --- Controls (Touch Swipe & Keyboard) ---
+        let touchStartY = 0;
+        const swipeThreshold = 30;
+
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+
+        canvasWrapper.addEventListener('touchstart', e => {
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: false });
+
+        canvasWrapper.addEventListener('touchmove', e => {
+            e.preventDefault(); // Stop screen bouncing while swiping
+        }, { passive: false });
+
+        canvasWrapper.addEventListener('touchend', e => {
+            if (!gameActive) return;
+            let touchEndY = e.changedTouches[0].screenY;
+            let diffY = touchEndY - touchStartY;
+
+            if (Math.abs(diffY) > swipeThreshold) {
+                if (diffY < 0) {
+                    // Swipe Up
+                    runner.jump();
+                } else {
+                    // Swipe Down
+                    runner.duck(true);
+                    setTimeout(() => runner.duck(false), 400); // Auto stand-up after 400ms
+                }
+            } else {
+                // Just a tap = jump
+                runner.jump();
+            }
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', e => {
+            if (!gameActive) return;
+            if (e.code === "Space" || e.code === "ArrowUp") {
+                runner.jump();
+            } else if (e.code === "ArrowDown") {
+                runner.duck(true);
+            }
+        });
+
+        document.addEventListener('keyup', e => {
+            if (e.code === "ArrowDown") {
+                runner.duck(false);
+            }
+        });
+
+        // --- UI Buttons ---
+        document.getElementById("startGameBtn").addEventListener("click", startGame);
+        document.getElementById("tryAgainBtn").addEventListener("click", startGame);
+        document.getElementById("helpBtn").addEventListener("click", () => {
+            gameActive = false;
+            guideModal.classList.remove("hidden");
+        });
+
+        // --- Fullscreen API ---
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Initial setup frame
+        drawEnvironment();
+        runner.draw();
+
+    </script>
+</body>
+
+</html>

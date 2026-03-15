@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Bouncer | TheVsHub Games</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.8);
+            --text-main: #f8fafc;
+            --accent: #3b82f6;
+            --bouncer-color: #facc15;
+            /* Neon Yellow */
+            --plat-color: #2ecc71;
+            /* Neon Green */
+            --plat-moving: #06b6d4;
+            /* Neon Cyan */
+            --plat-fragile: #f43f5e;
+            /* Neon Red */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* overflow: hidden; */
+            background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, #0a0f1a 80%);
+        }
+
+        /* --- Header --- */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .back-btn {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: var(--text-main);
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        /* --- Game Area --- */
+        .game-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 10px;
+            position: relative;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 10px;
+            gap: 15px;
+        }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .score-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* --- Canvas --- */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 9 / 16;
+            /* Portrait orientation for vertical jumping */
+            background: #000;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .modal-box {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transform: scale(1);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.hidden .modal-box {
+            transform: scale(0.8);
+        }
+
+        .modal-box h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--bouncer-color);
+            text-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+        }
+
+        .modal-box p {
+            color: #94a3b8;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .play-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            transition: all 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .guide-anim {
+            font-size: 2.5rem;
+            color: #94a3b8;
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .guide-anim i {
+            animation: slideDrag 2s infinite alternate ease-in-out;
+            color: var(--bouncer-color);
+        }
+
+        @keyframes slideDrag {
+            0% {
+                transform: translateX(-30px);
+            }
+
+            100% {
+                transform: translateX(30px);
+            }
+        }
+
+        .plat-guide {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .pg-box {
+            width: 30px;
+            height: 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="./index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <div class="action-btns">
+            <button class="icon-btn" id="fullscreenBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+            <button class="icon-btn" id="helpBtn" title="How to Play"><i
+                    class="fa-solid fa-circle-question"></i></button>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="scoreboard">
+            <div class="score-box">
+                <div class="score-title">Height</div>
+                <div class="score-val" id="scoreDisplay">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-title">Record</div>
+                <div class="score-val" id="highScoreDisplay">0</div>
+            </div>
+        </div>
+
+        <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+            <div class="modal-overlay" id="guideModal">
+                <div class="modal-box">
+                    <h2>Neon Bouncer</h2>
+                    <div class="guide-anim"><i class="fa-solid fa-hand-pointer"></i></div>
+                    <p><strong>Drag your finger</strong> (or use mouse/arrows) to move horizontally.</p>
+
+                    <div class="plat-guide">
+                        <div class="pg-box"
+                            style="background: var(--plat-color); box-shadow: 0 0 8px var(--plat-color);"></div>
+                        <span>Normal Platform</span>
+                    </div>
+                    <div class="plat-guide">
+                        <div class="pg-box"
+                            style="background: var(--plat-moving); box-shadow: 0 0 8px var(--plat-moving);"></div>
+                        <span>Moving Platform</span>
+                    </div>
+                    <div class="plat-guide" style="margin-bottom: 25px;">
+                        <div class="pg-box"
+                            style="background: var(--plat-fragile); box-shadow: 0 0 8px var(--plat-fragile);"></div>
+                        <span>Fragile (Breaks!)</span>
+                    </div>
+
+                    <button class="play-btn" id="startGameBtn">Start Bouncing</button>
+                </div>
+            </div>
+
+            <div class="modal-overlay hidden" id="gameOverModal">
+                <div class="modal-box">
+                    <h2 style="color: #f43f5e; text-shadow: 0 0 10px rgba(244, 63, 94, 0.5);">You Fell!</h2>
+                    <p style="font-size: 1.5rem; color: white;">Final Height: <span id="finalScoreDisplay">0</span></p>
+                    <button class="play-btn" id="tryAgainBtn" style="background: #f43f5e;">Bounce Again</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreDisplay = document.getElementById("scoreDisplay");
+        const highScoreDisplay = document.getElementById("highScoreDisplay");
+        const guideModal = document.getElementById("guideModal");
+        const gameOverModal = document.getElementById("gameOverModal");
+        const canvasWrapper = document.getElementById("canvasWrapper");
+
+        // --- Game State ---
+        let gameActive = false;
+        let score = 0;
+        let highScore = localStorage.getItem("neonBouncerHigh") || 0;
+        highScoreDisplay.textContent = highScore;
+
+        let platforms = [];
+        let particles = [];
+        const gravity = 0.3;
+        const jumpForce = -9.5;
+
+        // Input state
+        let keys = { left: false, right: false };
+        let mouseX = canvas.width / 2;
+        let usingTouchOrMouse = false;
+
+        // --- Player Object ---
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 150,
+            width: 20,
+            height: 20,
+            dy: 0,
+            dx: 0,
+            speed: 6,
+            color: '#facc15',
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.roundRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height, 5);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            },
+
+            update() {
+                // Apply Gravity
+                this.dy += gravity;
+                this.y += this.dy;
+
+                // Apply Horizontal Movement
+                if (usingTouchOrMouse) {
+                    // Smooth follow for touch/mouse
+                    this.x += (mouseX - this.x) * 0.2;
+                } else {
+                    // Keyboard
+                    if (keys.left) this.x -= this.speed;
+                    if (keys.right) this.x += this.speed;
+                }
+
+                // Screen Wrap Horizontally
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+
+                // Death (Fell off screen)
+                if (this.y > canvas.height + 50) {
+                    endGame();
+                }
+            },
+
+            jump() {
+                this.dy = jumpForce;
+                createParticles(this.x, this.y + this.height / 2, 5, this.color);
+            }
+        };
+
+        // --- Platforms ---
+        class Platform {
+            constructor(y) {
+                this.width = 60;
+                this.height = 10;
+                this.x = Math.random() * (canvas.width - this.width);
+                this.y = y;
+
+                // Determine Type based on score/height
+                let rand = Math.random();
+                if (score > 1000 && rand < 0.2) {
+                    this.type = 'fragile';
+                    this.color = '#f43f5e';
+                } else if (score > 500 && rand < 0.4) {
+                    this.type = 'moving';
+                    this.color = '#06b6d4';
+                    this.dx = (Math.random() > 0.5 ? 1 : -1) * (1 + Math.random() * 2);
+                } else {
+                    this.type = 'normal';
+                    this.color = '#2ecc71';
+                }
+                this.broken = false;
+            }
+
+            draw() {
+                if (this.broken) return;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.roundRect(this.x, this.y, this.width, this.height, 4);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            update() {
+                if (this.type === 'moving') {
+                    this.x += this.dx;
+                    if (this.x <= 0 || this.x + this.width >= canvas.width) {
+                        this.dx *= -1; // Bounce off walls
+                    }
+                }
+            }
+        }
+
+        function createStartingPlatforms() {
+            platforms = [];
+            // Base platform so player doesn't fall immediately
+            let base = new Platform(canvas.height - 20);
+            base.x = canvas.width / 2 - base.width / 2;
+            base.type = 'normal';
+            base.color = '#2ecc71';
+            platforms.push(base);
+
+            // Generate upward
+            for (let i = 1; i < 8; i++) {
+                platforms.push(new Platform(canvas.height - i * 85));
+            }
+        }
+
+        // --- Particles ---
+        function createParticles(x, y, amount, color) {
+            for (let i = 0; i < amount; i++) {
+                particles.push({
+                    x: x, y: y,
+                    xv: (Math.random() - 0.5) * 4,
+                    yv: (Math.random() - 0.5) * 4,
+                    life: 1.0,
+                    color: color
+                });
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.xv;
+                p.y += p.yv;
+                p.life -= 0.05;
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    ctx.fillStyle = p.color;
+                    ctx.globalAlpha = p.life;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1.0;
+        }
+
+        // --- Core Loops ---
+        function checkCollisions() {
+            // Only check collisions if falling downwards
+            if (player.dy > 0) {
+                for (let i = 0; i < platforms.length; i++) {
+                    let plat = platforms[i];
+                    if (!plat.broken &&
+                        player.x + player.width / 2 > plat.x &&
+                        player.x - player.width / 2 < plat.x + plat.width &&
+                        player.y + player.height / 2 > plat.y &&
+                        player.y + player.height / 2 < plat.y + plat.height + player.dy) {
+
+                        // Hit a platform
+                        if (plat.type === 'fragile') {
+                            plat.broken = true;
+                            createParticles(plat.x + plat.width / 2, plat.y, 10, plat.color);
+                        } else {
+                            player.jump();
+                            createParticles(plat.x + plat.width / 2, plat.y, 5, plat.color);
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateCamera() {
+            // If player goes above middle of screen, push everything down
+            if (player.y < canvas.height / 2) {
+                let diff = (canvas.height / 2) - player.y;
+                player.y = canvas.height / 2;
+
+                // Increase score based on height climbed
+                score += Math.floor(diff);
+                scoreDisplay.textContent = score;
+
+                // Move platforms down
+                for (let i = 0; i < platforms.length; i++) {
+                    platforms[i].y += diff;
+                }
+
+                // Move particles down
+                for (let i = 0; i < particles.length; i++) {
+                    particles[i].y += diff;
+                }
+            }
+
+            // Remove platforms that went off bottom, spawn new ones at top
+            for (let i = platforms.length - 1; i >= 0; i--) {
+                if (platforms[i].y > canvas.height) {
+                    platforms.splice(i, 1);
+                    // Add new platform above the highest one
+                    let highestY = Math.min(...platforms.map(p => p.y));
+                    platforms.push(new Platform(highestY - (80 + Math.random() * 30)));
+                }
+            }
+        }
+
+        function loop() {
+            if (!gameActive) return;
+
+            // Background
+            ctx.fillStyle = "#0a0f1a";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update & Draw Platforms
+            for (let i = 0; i < platforms.length; i++) {
+                platforms[i].update();
+                platforms[i].draw();
+            }
+
+            updateParticles();
+
+            // Player logic
+            player.update();
+            checkCollisions();
+            updateCamera();
+            player.draw();
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- State Management ---
+        function startGame() {
+            createStartingPlatforms();
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 150;
+            player.dy = 0;
+            score = 0;
+            particles = [];
+            mouseX = canvas.width / 2;
+            scoreDisplay.textContent = 0;
+
+            gameActive = true;
+            guideModal.classList.add("hidden");
+            gameOverModal.classList.add("hidden");
+
+            player.jump();
+            loop();
+        }
+
+        function endGame() {
+            gameActive = false;
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem("neonBouncerHigh", highScore);
+                highScoreDisplay.textContent = highScore;
+            }
+            document.getElementById("finalScoreDisplay").textContent = score;
+            gameOverModal.classList.remove("hidden");
+        }
+
+        // --- Controls ---
+
+        // Touch / Mouse logic mapped to canvas wrapper coordinates
+        function updateMousePos(clientX) {
+            usingTouchOrMouse = true;
+            const rect = canvasWrapper.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            mouseX = (clientX - rect.left) * scaleX;
+        }
+
+        // Mobile Touch
+        canvasWrapper.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            updateMousePos(e.touches[0].clientX);
+        }, { passive: false });
+
+        canvasWrapper.addEventListener("touchmove", (e) => {
+            e.preventDefault(); // crucial to prevent page scrolling while playing
+            updateMousePos(e.touches[0].clientX);
+        }, { passive: false });
+
+        // PC Mouse Fallback
+        canvasWrapper.addEventListener("mousemove", (e) => {
+            if (gameActive) updateMousePos(e.clientX);
+        });
+
+        // PC Keyboard
+        document.addEventListener("keydown", (e) => {
+            usingTouchOrMouse = false;
+            if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = true;
+            if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = true;
+        });
+
+        document.addEventListener("keyup", (e) => {
+            if (e.code === "ArrowLeft" || e.code === "KeyA") keys.left = false;
+            if (e.code === "ArrowRight" || e.code === "KeyD") keys.right = false;
+        });
+
+        // --- Buttons ---
+        document.getElementById("startGameBtn").addEventListener("click", startGame);
+        document.getElementById("tryAgainBtn").addEventListener("click", startGame);
+        document.getElementById("helpBtn").addEventListener("click", () => {
+            gameActive = false;
+            guideModal.classList.remove("hidden");
+        });
+
+        // Fullscreen API
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const gameArea = document.documentElement;
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (gameArea.requestFullscreen) gameArea.requestFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        // Initial draw
+        ctx.fillStyle = "#0a0f1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        player.draw();
+
+    </script>
+</body>
+
+</html>
